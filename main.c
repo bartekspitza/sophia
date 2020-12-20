@@ -1,6 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <inttypes.h>
+
+#define pieceSymbols "pnbrqkPNBRQK"
 
 typedef uint64_t Bitboard;
 
@@ -26,65 +30,37 @@ int getBit(Bitboard bb, int bit);
 
 int main() {
     Board board = initBoard();
-    printBoard(board); 
+    printBoard(board);
     return 0;
 }
 
 void printBoard(Board board) {
+    printf("\n");
     for (int y = 0; y < 8; y++) {
         char row[17];
         row[16] = '\0';
 
-        for (int x = 0; x < 16; x++) {
-            if (x % 2 != 0) {
-                row[x] = ' ';
-            } else {
-                int loc = 63 - ((y*8) + x/2);
-                Bitboard pw = getBit(board.pawn_W, loc);
-                Bitboard nw = getBit(board.knight_W, loc);
-                Bitboard bw = getBit(board.bishop_W, loc);
-                Bitboard rw = getBit(board.rook_W, loc);
-                Bitboard qw = getBit(board.queen_W, loc);
-                Bitboard kw = getBit(board.king_W, loc);
-                Bitboard pb = getBit(board.pawn_B, loc);
-                Bitboard nb = getBit(board.knight_B, loc);
-                Bitboard bb = getBit(board.bishop_B, loc);
-                Bitboard rb = getBit(board.rook_B, loc);
-                Bitboard qb = getBit(board.queen_B, loc);
-                Bitboard kb = getBit(board.king_B, loc);
-                
-                if (pw == 1) {
-                    row[x] = 'P';
-                } else if (nw == 1) {
-                    row[x] = 'N';
-                } else if (bw == 1) {
-                    row[x] = 'B';
-                } else if (rw == 1) {
-                    row[x] = 'R';
-                } else if (qw == 1) {
-                    row[x] = 'Q';
-                } else if (kw == 1) {
-                    row[x] = 'K';
-                } else if (pb == 1) {
-                    row[x] = 'p';
-                } else if (nb == 1) {
-                    row[x] = 'n';
-                } else if (bb == 1) {
-                    row[x] = 'b';
-                } else if (rb == 1) {
-                    row[x] = 'r';
-                } else if (qb == 1) {
-                    row[x] = 'q';
-                } else if (kb == 1) {
-                    row[x] = 'k';
-                } else {
-                    row[x] = ' ';
+        for (int x = 0; x < 8; x++) {
+            row[x*2+1] = ' ';
+
+            int loc = 63 - ((y*8) + x);
+            bool printed = false;
+
+            for (int i = 0; i < 12; i++) {
+                Bitboard* bb = ((Bitboard*) &board) + i;                    
+
+                int bit = getBit(*bb, loc);
+                if (bit == 1) {
+                    row[x*2] = pieceSymbols[i];
+                    printed = true;
                 }
             }
+
+            if (! printed) row[x*2] = ' ';
         }
-        printf("%s", row);
-        printf("\n");
+        printf("%s\n", row);
     }
+    printf("\n");
 }
 
 Board initBoard() {
