@@ -7,10 +7,9 @@
 #define ROWS 8
 #define COLS 8
 #define H_FILE 'h'
-#define pieceSymbols "PNBRQKpnbrqk"
+#define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 typedef uint64_t Bitboard;
-
 typedef struct {
     Bitboard pawn_W;
     Bitboard knight_W;
@@ -25,6 +24,10 @@ typedef struct {
     Bitboard queen_B;
     Bitboard king_B;
     int turn;
+    int castling;
+    int epSquare;
+    int halfmoves;
+    int fullmoves;
 } Board;
 
 typedef struct {
@@ -34,6 +37,14 @@ typedef struct {
 
 Bitboard pawnStartWhite = 0xFF00;
 Bitboard pawnStartBlack = 0x00FF000000000000;
+
+const int BLACK = 0;
+const int WHITE = 1;
+
+enum PIECES {
+    PAWN_W, KNIGHT_W, BISHOP_W, ROOK_W, QUEEN_W, KING_W,
+    PAWN_B, KNIGHT_B, BISHOP_B, ROOK_B, QUEEN_B, KING_B
+};
 
 enum SQUARES {
     H1, G1, F1, E1, D1, C1, B1, A1,
@@ -57,7 +68,9 @@ char SQUARE_NAMES[64][3] = {
     "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8"
 };
 
-Board initBoard();
+char CASTLING_RIGHTS[4][2] = { "K", "Q", "k", "q" };
+
+void initBoard(Board* board);
 void printBitboard(Bitboard bb);
 void printBits(Bitboard bb);
 void printBoard(Board board);
@@ -69,22 +82,139 @@ void moveToSan(Move move, char* san);
 void pushMove(Board* board, Move move);
 void pushMove(Board* board, Move move);
 Move* legalMoves(Board board, int* length);
+void setFen(Board* board, char* fen);
+void reset(Board* board);
+Bitboard* pieceBitboard(Board* board, int pieceType);
 
 int main() {
-    Board board = initBoard();
+    Board board;
+    initBoard(&board);
+    setFen(&board, "rnbqkbnr/ppp2ppp/8/3ppP2/8/1NN3P1/8/4K3 w kq e6 0 4");
     printBoard(board);
 
-    int length;
-    Move* first = legalMoves(board, &length);
-    Move* move = first;
-    for (int i = 0; i < length;i++) {
-        char san[6];
-        moveToSan(*move, (char*) &san);
-        printf("%s\n", (char*) &san);
-        move++;
-    }
-
     return 0;
+}
+
+Bitboard* pieceBitboard(Board* board, int pieceType) {
+    return (Bitboard*) board + pieceType;
+}
+
+void reset(Board* board) {
+    Bitboard* bb = (Bitboard*) (board);
+    for (int i = 0; i < 12; i++) {
+        *bb &= 0;
+        bb++;
+    }
+    board->turn = WHITE;
+    board->castling = 0;
+    board->epSquare = -1;
+}
+
+void setFen(Board* board, char* fen) {
+    reset(board);
+	
+	int rank = 7;
+    int file = 0;
+    int piece = -1;
+    int turn;
+    int spacesEncountered = 0;
+    char enPassantFile;
+    char enPassantRank;
+	while (*fen) {
+        piece = -1;
+
+		switch (*fen) {
+            case 'b': 
+                piece = BISHOP_B; 
+                turn = BLACK;
+                enPassantFile = *fen;
+                break;
+            case 'w':
+                turn = WHITE;
+                break;
+            case 'p': piece = PAWN_B; break;
+            case 'n': piece = KNIGHT_B; break;
+            case 'r': piece = ROOK_B; break;
+            case 'q': piece = QUEEN_B; break;
+            case 'k': piece = KING_B; break;
+            case 'P': piece = PAWN_W; break;
+            case 'N': piece = KNIGHT_W; break;
+            case 'B': piece = BISHOP_W; break;
+            case 'R': piece = ROOK_W; break;
+            case 'Q': piece = QUEEN_W; break;
+            case 'K': piece = KING_W; break;
+
+            case 'a':
+            case 'c':
+            case 'd':
+            case 'e':
+            case 'f':
+            case 'g':
+            case 'h': 
+                enPassantFile = *fen; 
+                break;
+
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+                enPassantRank = *fen;
+                file += atoi(fen);
+                break;
+
+            case '/':
+                rank--;
+                file = 0;
+                fen++;
+                continue;
+            case ' ':
+                spacesEncountered++;
+                enPassantFile = '0';
+                enPassantRank = '0';
+                fen++;
+                continue;
+            case '-':
+                fen++;
+                continue;
+        }
+
+        // Pieces
+        if (spacesEncountered == 0) {
+            if (piece != -1 && rank >= 0) {
+                int square = ((rank+1) * ROWS) - file - 1;
+                file++;
+
+                Bitboard* bb = pieceBitboard(board, piece);
+                *bb |= 1LL << square;
+            }
+
+        // Turn
+        } else if (spacesEncountered == 1) {
+            board->turn = turn;
+
+        // Castling rights
+        } else if (spacesEncountered == 2) {
+            if (piece == KING_W) board->castling |= 1;
+            else if (piece == QUEEN_W) board->castling |= 1 << 1;
+            else if (piece == KING_B) board->castling |= 1 << 2;
+            else if (piece == QUEEN_B) board->castling |= 1 << 3;
+        
+        // En passant square
+        } else if (spacesEncountered == 3) {
+            if (enPassantRank != '0' && enPassantFile != '0') {
+                board->epSquare = ((8 - ('h' - enPassantFile)+1) * 8) - (7 - ('8' - enPassantRank));
+            }
+        }
+
+        // TODO: Half- and fullmove clock
+		
+		fen++;
+	}
+
 }
 
 void moveToSan(Move move, char* san) {
@@ -185,23 +315,22 @@ void pushSan(Board* board, char* san) {
     pushMove(board, move);
 }
 
-Board initBoard() {
-    Board board = {
-        .pawn_W   = pawnStartWhite,
-        .knight_W = 0b01000010,
-        .bishop_W = 0b00100100,
-        .rook_W   = 0b10000001,
-        .queen_W  = 0b00010000,
-        .king_W   = 0b00001000,
-        .pawn_B   = pawnStartBlack,
-        .knight_B = 0b0010010000000000000000000000000000000000000000000000000000000000,
-        .bishop_B = 0b0100001000000000000000000000000000000000000000000000000000000000,
-        .rook_B   = 0b1000000100000000000000000000000000000000000000000000000000000000,
-        .queen_B  = 0b0001000000000000000000000000000000000000000000000000000000000000,
-        .king_B   = 0b0000100000000000000000000000000000000000000000000000000000000000,
-        .turn = 1
-    };
-    return board;
+void initBoard(Board* board) {
+    board->pawn_W   = pawnStartWhite,
+    board->knight_W = 0b01000010;
+    board->bishop_W = 0b00100100;
+    board->rook_W   = 0b10000001;
+    board->queen_W  = 0b00010000;
+    board->king_W   = 0b00001000;
+    board->pawn_B   = pawnStartBlack;
+    board->knight_B = 0b0010010000000000000000000000000000000000000000000000000000000000;
+    board->bishop_B = 0b0100001000000000000000000000000000000000000000000000000000000000;
+    board->rook_B   = 0b1000000100000000000000000000000000000000000000000000000000000000;
+    board->queen_B  = 0b0001000000000000000000000000000000000000000000000000000000000000;
+    board->king_B   = 0b0000100000000000000000000000000000000000000000000000000000000000;
+    board->turn = 1;
+    board->castling = 15;
+    board->epSquare = -1;
 }
 
 void setBit(Bitboard* bb, int bit) {
@@ -218,6 +347,7 @@ int getBit(Bitboard bb, int bit) {
 }
 
 void printBoard(Board board) {
+    char pieceSymbols[] = "PNBRQKpnbrqk";
     printf("\n");
     for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
@@ -240,6 +370,15 @@ void printBoard(Board board) {
         }
         printf("\n");
     }
+
+    printf("Turn: %s\n", board.turn ? "White" : "Black");
+    printf("Castling: ");
+    for (int i = 0; i < 4; i++) {
+        if ((board.castling & (1 << i)) >> i) {
+            putchar(CASTLING_RIGHTS[i][0]);
+        }
+    }
+    printf("\nEp square: %s (%d)\n", board.epSquare == -1 ? "None" : &SQUARE_NAMES[board.epSquare][0], board.epSquare);
     printf("\n");
 }
 
