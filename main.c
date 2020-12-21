@@ -4,7 +4,10 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
-#define pieceSymbols "pnbrqkPNBRQK"
+#define ROWS 8
+#define COLS 8
+#define H_FILE 'h'
+#define pieceSymbols "PNBRQKpnbrqk"
 
 typedef uint64_t Bitboard;
 
@@ -21,17 +24,46 @@ typedef struct {
     Bitboard rook_B;
     Bitboard queen_B;
     Bitboard king_B;
+    int turn;
 } Board;
 
 Board initBoard();
 void printBitboard(Bitboard bb);
 void printBoard(Board board);
 int getBit(Bitboard bb, int bit);
+void clearBit(Bitboard* bb, int bit);
+void setBit(Bitboard* bb, int bit);
+void makeMove(Board* board, char* move);
 
 int main() {
     Board board = initBoard();
+    makeMove(&board, "e2e4");
+    makeMove(&board, "d7d6");
+    makeMove(&board, "g1f3");
     printBoard(board);
     return 0;
+}
+
+void makeMove(Board* board, char* move) {
+    int from_file = H_FILE - move[0];
+    int from_rank = atoi(&move[1]) - 1;
+    int to_file = H_FILE - move[2];
+    int to_rank = atoi(&move[3]) - 1;
+    int from_square = ROWS * (from_rank) + (from_file);
+    int to_square = ROWS * (to_rank) + (to_file);
+
+    Bitboard* bb = board->turn ? &(board->pawn_W) : &(board->pawn_B);
+
+    for (int i = 0; i < 6; i++) {
+        bb += i;
+        if (getBit(*bb, from_square)) {
+            clearBit(bb, from_square);
+            setBit(bb, to_square);
+            break;
+        }
+    }
+    // Toggle the turn
+    board->turn ^= 1;
 }
 
 void printBoard(Board board) {
@@ -74,8 +106,16 @@ Board initBoard() {
         .rook_B   = 0b1000000100000000000000000000000000000000000000000000000000000000,
         .queen_B  = 0b0001000000000000000000000000000000000000000000000000000000000000,
         .king_B   = 0b0000100000000000000000000000000000000000000000000000000000000000,
+        .turn = 1
     };
     return board;
+}
+
+void setBit(Bitboard* bb, int bit) {
+    *bb |= (1LL << bit);
+}
+void clearBit(Bitboard* bb, int bit) {
+    *bb &= ~(1LL << bit);
 }
 
 int getBit(Bitboard bb, int bit) {
