@@ -37,11 +37,7 @@ int main() {
 void printBoard(Board board) {
     printf("\n");
     for (int y = 0; y < 8; y++) {
-        char row[17];
-        row[16] = '\0';
-
         for (int x = 0; x < 8; x++) {
-            row[x*2+1] = ' ';
 
             int loc = 63 - ((y*8) + x);
             bool printed = false;
@@ -49,16 +45,17 @@ void printBoard(Board board) {
             for (int i = 0; i < 12; i++) {
                 Bitboard* bb = ((Bitboard*) &board) + i;                    
 
-                int bit = getBit(*bb, loc);
-                if (bit == 1) {
-                    row[x*2] = pieceSymbols[i];
+                if (getBit(*bb, loc)) {
+                    printf("%c", pieceSymbols[i]);
                     printed = true;
+                    break;
                 }
             }
 
-            if (! printed) row[x*2] = ' ';
+            if (! printed) putchar('.');
+            printf(" ");
         }
-        printf("%s\n", row);
+        printf("\n");
     }
     printf("\n");
 }
