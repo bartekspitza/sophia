@@ -27,45 +27,57 @@ typedef struct {
     int turn;
 } Board;
 
+typedef struct {
+    Bitboard fromSquare;
+    Bitboard toSquare;
+} Move;
+
 Board initBoard();
 void printBitboard(Bitboard bb);
 void printBoard(Board board);
 int getBit(Bitboard bb, int bit);
 void clearBit(Bitboard* bb, int bit);
 void setBit(Bitboard* bb, int bit);
-void makeMove(Board* board, char* move);
+void pushSan(Board* board, char* move);
+void pushMove(Board* board, Move move);
 
 int main() {
     Board board = initBoard();
-    makeMove(&board, "e2e4");
-    makeMove(&board, "d7d6");
-    makeMove(&board, "g1d6");
-    makeMove(&board, "d6f3");
+    pushSan(&board, "e2e4");
+    pushSan(&board, "d7d6");
+    pushSan(&board, "g1d6");
+    pushSan(&board, "d6f3");
     printBoard(board);
     return 0;
 }
 
-void makeMove(Board* board, char* move) {
-    int from_file = H_FILE - move[0];
-    int from_rank = atoi(&move[1]) - 1;
-    int to_file = H_FILE - move[2];
-    int to_rank = atoi(&move[3]) - 1;
-    int from_square = ROWS * (from_rank) + (from_file);
-    int to_square = ROWS * (to_rank) + (to_file);
-
+void pushMove(Board* board, Move move) {
     Bitboard* bb = board->turn ? &(board->pawn_W) : &(board->pawn_W);
 
     for (int i = 0; i < 12; i++) {
-        if (getBit(*bb, from_square)) {
-            clearBit(bb, from_square);
-            setBit(bb, to_square);
-        } else if (getBit(*bb, to_square)) {
-            clearBit(bb, to_square);
+        if (getBit(*bb, move.fromSquare)) {
+            clearBit(bb, move.fromSquare);
+            setBit(bb, move.toSquare);
+        } else if (getBit(*bb, move.toSquare)) {
+            clearBit(bb, move.toSquare);
         }
         ++bb;
     }
     // Toggle the turn
     board->turn ^= 1;
+}
+
+void pushSan(Board* board, char* san) {
+    int fromFile = H_FILE - san[0];
+    int fromRank = atoi(&san[1]) - 1;
+    int toFile = H_FILE - san[2];
+    int toRank = atoi(&san[3]) - 1;
+    Move move = {
+        .fromSquare = ROWS * (fromRank) + (fromFile),
+        .toSquare = ROWS * (toRank) + (toFile)
+    };
+
+    pushMove(board, move);
 }
 
 Board initBoard() {
