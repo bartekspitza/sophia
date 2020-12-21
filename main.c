@@ -39,7 +39,8 @@ int main() {
     Board board = initBoard();
     makeMove(&board, "e2e4");
     makeMove(&board, "d7d6");
-    makeMove(&board, "g1f3");
+    makeMove(&board, "g1d6");
+    makeMove(&board, "d6f3");
     printBoard(board);
     return 0;
 }
@@ -52,44 +53,19 @@ void makeMove(Board* board, char* move) {
     int from_square = ROWS * (from_rank) + (from_file);
     int to_square = ROWS * (to_rank) + (to_file);
 
-    Bitboard* bb = board->turn ? &(board->pawn_W) : &(board->pawn_B);
+    Bitboard* bb = board->turn ? &(board->pawn_W) : &(board->pawn_W);
 
-    for (int i = 0; i < 6; i++) {
-        bb += i;
+    for (int i = 0; i < 12; i++) {
         if (getBit(*bb, from_square)) {
             clearBit(bb, from_square);
             setBit(bb, to_square);
-            break;
+        } else if (getBit(*bb, to_square)) {
+            clearBit(bb, to_square);
         }
+        ++bb;
     }
     // Toggle the turn
     board->turn ^= 1;
-}
-
-void printBoard(Board board) {
-    printf("\n");
-    for (int y = 0; y < 8; y++) {
-        for (int x = 0; x < 8; x++) {
-
-            int loc = 63 - ((y*8) + x);
-            bool printed = false;
-
-            for (int i = 0; i < 12; i++) {
-                Bitboard* bb = ((Bitboard*) &board) + i;                    
-
-                if (getBit(*bb, loc)) {
-                    printf("%c", pieceSymbols[i]);
-                    printed = true;
-                    break;
-                }
-            }
-
-            if (! printed) putchar('.');
-            printf(" ");
-        }
-        printf("\n");
-    }
-    printf("\n");
 }
 
 Board initBoard() {
@@ -122,6 +98,32 @@ int getBit(Bitboard bb, int bit) {
     Bitboard val = bb & (1LL << bit);
     val = val >> bit;
     return (int) val;
+}
+
+void printBoard(Board board) {
+    printf("\n");
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+
+            int loc = 63 - ((y*8) + x);
+            bool printed = false;
+
+            for (int i = 0; i < 12; i++) {
+                Bitboard* bb = ((Bitboard*) &board) + i;                    
+
+                if (getBit(*bb, loc)) {
+                    printf("%c", pieceSymbols[i]);
+                    printed = true;
+                    break;
+                }
+            }
+
+            if (! printed) putchar('.');
+            printf(" ");
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
 
 void printBitboard(Bitboard bb) {
