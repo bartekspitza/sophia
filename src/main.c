@@ -4,7 +4,7 @@
 
 int main() {
     Board board;
-    setFen(&board, "4k3/8/8/3p4/2P1P3/8/8/4K3 b - - 0 1");
+    setFen(&board, "4k3/8/8/4p3/3P4/8/8/K7 w - - 0 1");
     printBoard(board);
 
     int length;
