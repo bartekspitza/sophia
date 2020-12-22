@@ -13,19 +13,6 @@
 Bitboard pawnStartWhite = 0xFF00;
 Bitboard pawnStartBlack = 0x00FF000000000000;
 
-/*
-enum SQUARES {
-    H1, G1, F1, E1, D1, C1, B1, A1,
-    H2, G2, F2, E2, D2, C2, B2, A2,
-    H3, G3, F3, E3, D3, C3, B3, A3,
-    H4, G4, F4, E4, D4, C4, B4, A4,
-    H5, G5, F5, E5, D5, C5, B5, A5,
-    H6, G6, F6, E6, D6, C6, B6, A6,
-    H7, G7, F7, E7, D7, C7, B7, A7,
-    H8, G8, F8, E8, D8, C8, B8, A8
-};
-*/
-
 Bitboard PAWN_W_ATTACKS_EAST[64] = {
     0,       0,       0,       0,       0,       0,       0,       0,
     0, bit(H3), bit(G3), bit(F3), bit(E3), bit(D3), bit(C3), bit(B3),
@@ -142,18 +129,16 @@ Move* legalMoves(Board board, int* length) {
                 break;
             }
         }
-        Bitboard tmp = board.king_W;
-        tmp |= board.king_W << 1;
-        tmp |= board.king_W >> 1;
-        tmp |= board.king_W;
-
-        Bitboard moves = 0;
-        moves |= tmp; 
-        moves |= tmp << 8; 
-        moves |= tmp >> 8; 
-
-
-
+        Bitboard kingMoves = KING_MOVEMENT[kingSquare];
+        kingMoves ^= kingMoves & occupancyWhite;
+        for (int i = 0; i < 64;i++) {
+            if (getBit(kingMoves, i)) {
+                move->fromSquare = kingSquare;
+                move->toSquare = i;
+                move++;
+                (*length)++;
+            }
+        }
     } else {
         // Pawn pushes
         Bitboard singlePush = board.pawn_B >> 8;
@@ -196,6 +181,25 @@ Move* legalMoves(Board board, int* length) {
                     move++;
                     (*length)++;
                 }
+            }
+        }
+
+        // King
+        int kingSquare;
+        for (int i = 0; i < 64;i++) {
+            if (getBit(board.king_B, i)) {
+                kingSquare = i;
+                break;
+            }
+        }
+        Bitboard kingMoves = KING_MOVEMENT[kingSquare];
+        kingMoves ^= kingMoves & occupancyBlack;
+        for (int i = 0; i < 64;i++) {
+            if (getBit(kingMoves, i)) {
+                move->fromSquare = kingSquare;
+                move->toSquare = i;
+                move++;
+                (*length)++;
             }
         }
     }
