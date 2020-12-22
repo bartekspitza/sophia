@@ -4,7 +4,8 @@
 #define ROWS 8
 #define COLS 8
 #define H_FILE 'h'
-#define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+#define BLACK 0
+#define WHITE 1
 
 #include <stdint.h>
 
@@ -62,7 +63,6 @@ void moveToSan(Move move, char* san);
 void pushMove(Board* board, Move move);
 void pushMove(Board* board, Move move);
 Move* legalMoves(Board board, int* length);
-void setFen(Board* board, char* fen);
 void reset(Board* board);
 Bitboard* pieceBitboard(Board* board, int pieceType);
 
