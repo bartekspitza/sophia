@@ -1,10 +1,21 @@
+#include <stdlib.h>
 #include "fen.h"
 #include "board.h"
-#include <stdlib.h>
+
+void reset(Board* board) {
+    Bitboard* bb = (Bitboard*) (board);
+    for (int i = 0; i < 12; i++) {
+        *bb &= 0;
+        bb++;
+    }
+    board->turn = WHITE;
+    board->castling = 0;
+    board->epSquare = -1;
+}
 
 void setFen(Board* board, char* fen) {
     reset(board);
-	
+
 	int rank = 7;
     int file = 0;
     int piece = -1;
@@ -77,7 +88,7 @@ void setFen(Board* board, char* fen) {
         // Pieces
         if (spacesEncountered == 0) {
             if (piece != -1 && rank >= 0) {
-                int square = ((rank+1) * ROWS) - file - 1;
+                int square = ((rank+1) * 8) - file - 1;
                 file++;
 
                 Bitboard* bb = pieceBitboard(board, piece);

@@ -1,9 +1,9 @@
-#include "board.h"
 #include <stdbool.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "fen.h"
+#include "board.h"
+#include "utils.h"
 
 Bitboard pawnStartWhite = 0xFF00;
 Bitboard pawnStartBlack = 0x00FF000000000000;
@@ -25,19 +25,6 @@ Bitboard* pieceBitboard(Board* board, int pieceType) {
     return (Bitboard*) board + pieceType;
 }
 
-void reset(Board* board) {
-    Bitboard* bb = (Bitboard*) (board);
-    for (int i = 0; i < 12; i++) {
-        *bb &= 0;
-        bb++;
-    }
-    board->turn = WHITE;
-    board->castling = 0;
-    board->epSquare = -1;
-}
-
-
-
 void moveToSan(Move move, char* san) {
     *san = SQUARE_NAMES[move.fromSquare][0];
     *(san+1) = SQUARE_NAMES[move.fromSquare][1];
@@ -56,10 +43,10 @@ Move* legalMoves(Board board, int* length) {
 
     // Pawn pushes
     if (board.turn) {
-        Bitboard singlePush = board.pawn_W << ROWS;
+        Bitboard singlePush = board.pawn_W << 8;
         singlePush ^= singlePush & occupancy;
 
-        Bitboard doublePush = (board.pawn_W & pawnStartWhite) << ROWS*2;
+        Bitboard doublePush = (board.pawn_W & pawnStartWhite) << 8*2;
         doublePush ^= doublePush & occupancy;
         doublePush = doublePush >> 8;
         doublePush &= singlePush;
@@ -67,23 +54,23 @@ Move* legalMoves(Board board, int* length) {
 
         for (int i = 0; i < 64;i++) {
             if (getBit(singlePush, i)) {
-                move->fromSquare = i-ROWS;
+                move->fromSquare = i-8;
                 move->toSquare = i;
                 move++;
                 (*length)++;
             }
             if (getBit(doublePush, i)) {
-                move->fromSquare = i-ROWS*2;
+                move->fromSquare = i-8*2;
                 move->toSquare = i;
                 move++;
                 (*length)++;
             }
         }
     } else {
-        Bitboard singlePush = board.pawn_B >> ROWS;
+        Bitboard singlePush = board.pawn_B >> 8;
         singlePush ^= singlePush & occupancy;
 
-        Bitboard doublePush = (board.pawn_B & pawnStartBlack) >> ROWS*2;
+        Bitboard doublePush = (board.pawn_B & pawnStartBlack) >> 8*2;
         doublePush ^= doublePush & occupancy;
         doublePush = doublePush << 8;
         doublePush &= singlePush;
@@ -91,13 +78,13 @@ Move* legalMoves(Board board, int* length) {
 
         for (int i = 0; i < 64;i++) {
             if (getBit(singlePush, i)) {
-                move->fromSquare = i+ROWS;
+                move->fromSquare = i+8;
                 move->toSquare = i;
                 move++;
                 (*length)++;
             }
             if (getBit(doublePush, i)) {
-                move->fromSquare = i+ROWS*2;
+                move->fromSquare = i+8*2;
                 move->toSquare = i;
                 move++;
                 (*length)++;
@@ -125,32 +112,15 @@ void pushMove(Board* board, Move move) {
 }
 
 void pushSan(Board* board, char* san) {
-    int fromFile = H_FILE - san[0];
+    int fromFile = 'h' - san[0];
     int fromRank = atoi(&san[1]) - 1;
-    int toFile = H_FILE - san[2];
+    int toFile = 'h' - san[2];
     int toRank = atoi(&san[3]) - 1;
     Move move = {
-        .fromSquare = ROWS * (fromRank) + (fromFile),
-        .toSquare = ROWS * (toRank) + (toFile)
+        .fromSquare = 8 * (fromRank) + (fromFile),
+        .toSquare = 8 * (toRank) + (toFile)
     };
     pushMove(board, move);
-}
-
-void initBoard(Board* board) {
-    setFen(board, START_FEN);
-}
-
-void setBit(Bitboard* bb, int bit) {
-    *bb |= (1LL << bit);
-}
-void clearBit(Bitboard* bb, int bit) {
-    *bb &= ~(1LL << bit);
-}
-
-int getBit(Bitboard bb, int bit) {
-    Bitboard val = bb & (1LL << bit);
-    val = val >> bit;
-    return (int) val;
 }
 
 void printBoard(Board board) {
@@ -186,37 +156,5 @@ void printBoard(Board board) {
         }
     }
     printf("\nEp square: %s (%d)\n", board.epSquare == -1 ? "None" : &SQUARE_NAMES[board.epSquare][0], board.epSquare);
-    printf("\n");
-}
-
-void printBitboard(Bitboard bb) {
-    printf("\n");
-    for (int y = 0; y < 8; y++) {
-        for (int x = 0; x < 8; x++) {
-
-            int loc = 63 - ((y*8) + x);
-
-            if (getBit(bb, loc)) {
-                putchar('x');
-            } else {
-                putchar('.');
-            }
-
-            printf(" ");
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
-void printBits(Bitboard bb) {
-    for (int i = 63; i >= 0; i--) {
-        int bit = getBit(bb, i);
-        if (bit == 0) {
-            printf("0");
-        } else if (bit == 1) {
-            printf("1");
-        }
-    }
     printf("\n");
 }

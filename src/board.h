@@ -1,44 +1,8 @@
 #ifndef BOARD_H
-
 #define BOARD_H
-#define ROWS 8
-#define COLS 8
-#define H_FILE 'h'
-#define BLACK 0
-#define WHITE 1
 
-#include <stdint.h>
-
-typedef uint64_t Bitboard;
-typedef struct {
-    Bitboard pawn_W;
-    Bitboard knight_W;
-    Bitboard bishop_W;
-    Bitboard rook_W;
-    Bitboard queen_W;
-    Bitboard king_W;
-    Bitboard pawn_B;
-    Bitboard knight_B;
-    Bitboard bishop_B;
-    Bitboard rook_B;
-    Bitboard queen_B;
-    Bitboard king_B;
-    int turn;
-    int castling;
-    int epSquare;
-    int halfmoves;
-    int fullmoves;
-} Board;
-
-typedef struct {
-    Bitboard fromSquare;
-    Bitboard toSquare;
-} Move;
-
-enum PIECES {
-    PAWN_W, KNIGHT_W, BISHOP_W, ROOK_W, QUEEN_W, KING_W,
-    PAWN_B, KNIGHT_B, BISHOP_B, ROOK_B, QUEEN_B, KING_B
-};
+#include "typedefs.h"
+#include "fen.h"
 
 enum SQUARES {
     H1, G1, F1, E1, D1, C1, B1, A1,
@@ -51,19 +15,12 @@ enum SQUARES {
     H8, G8, F8, E8, D8, C8, B8, A8
 };
 
-void initBoard(Board* board);
-void printBitboard(Bitboard bb);
-void printBits(Bitboard bb);
 void printBoard(Board board);
-int getBit(Bitboard bb, int bit);
-void clearBit(Bitboard* bb, int bit);
-void setBit(Bitboard* bb, int bit);
 void pushSan(Board* board, char* move);
 void moveToSan(Move move, char* san);
 void pushMove(Board* board, Move move);
 void pushMove(Board* board, Move move);
 Move* legalMoves(Board board, int* length);
-void reset(Board* board);
 Bitboard* pieceBitboard(Board* board, int pieceType);
 
 #endif
