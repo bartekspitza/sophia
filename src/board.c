@@ -44,8 +44,6 @@ void pushMove(Board* board, Move move) {
     board->turn ^= 1;
 }
 
-
-
 void printBoard(Board board) {
     char pieceSymbols[] = "PNBRQKpnbrqk";
     printf("\n");
