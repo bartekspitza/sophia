@@ -1,0 +1,69 @@
+#ifndef BOARD_H
+
+#define BOARD_H
+#define ROWS 8
+#define COLS 8
+#define H_FILE 'h'
+#define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+#include <stdint.h>
+
+typedef uint64_t Bitboard;
+typedef struct {
+    Bitboard pawn_W;
+    Bitboard knight_W;
+    Bitboard bishop_W;
+    Bitboard rook_W;
+    Bitboard queen_W;
+    Bitboard king_W;
+    Bitboard pawn_B;
+    Bitboard knight_B;
+    Bitboard bishop_B;
+    Bitboard rook_B;
+    Bitboard queen_B;
+    Bitboard king_B;
+    int turn;
+    int castling;
+    int epSquare;
+    int halfmoves;
+    int fullmoves;
+} Board;
+
+typedef struct {
+    Bitboard fromSquare;
+    Bitboard toSquare;
+} Move;
+
+enum PIECES {
+    PAWN_W, KNIGHT_W, BISHOP_W, ROOK_W, QUEEN_W, KING_W,
+    PAWN_B, KNIGHT_B, BISHOP_B, ROOK_B, QUEEN_B, KING_B
+};
+
+enum SQUARES {
+    H1, G1, F1, E1, D1, C1, B1, A1,
+    H2, G2, F2, E2, D2, C2, B2, A2,
+    H3, G3, F3, E3, D3, C3, B3, A3,
+    H4, G4, F4, E4, D4, C4, B4, A4,
+    H5, G5, F5, E5, D5, C5, B5, A5,
+    H6, G6, F6, E6, D6, C6, B6, A6,
+    H7, G7, F7, E7, D7, C7, B7, A7,
+    H8, G8, F8, E8, D8, C8, B8, A8
+};
+
+void initBoard(Board* board);
+void printBitboard(Bitboard bb);
+void printBits(Bitboard bb);
+void printBoard(Board board);
+int getBit(Bitboard bb, int bit);
+void clearBit(Bitboard* bb, int bit);
+void setBit(Bitboard* bb, int bit);
+void pushSan(Board* board, char* move);
+void moveToSan(Move move, char* san);
+void pushMove(Board* board, Move move);
+void pushMove(Board* board, Move move);
+Move* legalMoves(Board board, int* length);
+void setFen(Board* board, char* fen);
+void reset(Board* board);
+Bitboard* pieceBitboard(Board* board, int pieceType);
+
+#endif
