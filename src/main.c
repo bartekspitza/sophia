@@ -4,8 +4,10 @@
 
 int main() {
     Board board;
-    setFen(&board, "6Nk/8/8/4p3/3P4/8/8/KN6 b - - 0 1");
+    setFen(&board, "4k3/8/8/3r4/3q1b2/8/1P6/4K3 b - - 0 1");
     printBoard(board);
+
+    initMoveGenerationTables();
 
     int length;
     Move* move = legalMoves(board, &length);
