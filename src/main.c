@@ -9,15 +9,14 @@ int main() {
 
     initMoveGenerationTables();
 
-    int length;
-    Move* move = legalMoves(board, &length);
-    printf("Amount moves: %d\n", length);
+    Move moves[250];
+    int amount = legalMoves(board, moves);
+    printf("Amount moves: %d\n", amount);
 
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < amount; i++) {
         char san[6];
-        moveToSan(*move, &san[0]);
-        printf("%s\n", san);
-        ++move;
+        moveToSan(moves[i], san);
+        //printf("%s\n", san);
     }
 
     return 0;

@@ -15,8 +15,8 @@
 #define set_bit(bitboard, square) (bitboard |= (1ULL << square))
 
 
-Bitboard pawnStartWhite = 0xFF00;
-Bitboard pawnStartBlack = 0x00FF000000000000;
+Bitboard PAWN_START_WHITE = 0xFF00;
+Bitboard PAWN_START_BLACK = 0x00FF000000000000;
 
 Bitboard PAWN_W_ATTACKS_EAST[64] = {
     0,       0,       0,       0,       0,       0,       0,       0,
@@ -95,328 +95,144 @@ int BISHOP_RELEVANT_BITS[64] = {
 // Movement masks
 Bitboard BISHOP_MOVEMENT[64];
 Bitboard ROOK_MOVEMENT[64];
-// Allt the different attack masks combinations (decided by blockers) for each square
+// All the different attack masks combinations (decided by blockers) for each square
 Bitboard BISHOP_ATTACKS[64][512];
 Bitboard ROOK_ATTACKS[64][4096];
 
-const Bitboard ROOK_MAGICS[64] = {
-    0xa8002c000108020ULL,
-    0x6c00049b0002001ULL,
-    0x100200010090040ULL,
-    0x2480041000800801ULL,
-    0x280028004000800ULL,
-    0x900410008040022ULL,
-    0x280020001001080ULL,
-    0x2880002041000080ULL,
-    0xa000800080400034ULL,
-    0x4808020004000ULL,
-    0x2290802004801000ULL,
-    0x411000d00100020ULL,
-    0x402800800040080ULL,
-    0xb000401004208ULL,
-    0x2409000100040200ULL,
-    0x1002100004082ULL,
-    0x22878001e24000ULL,
-    0x1090810021004010ULL,
-    0x801030040200012ULL,
-    0x500808008001000ULL,
-    0xa08018014000880ULL,
-    0x8000808004000200ULL,
-    0x201008080010200ULL,
-    0x801020000441091ULL,
-    0x800080204005ULL,
-    0x1040200040100048ULL,
-    0x120200402082ULL,
-    0xd14880480100080ULL,
-    0x12040280080080ULL,
-    0x100040080020080ULL,
-    0x9020010080800200ULL,
-    0x813241200148449ULL,
-    0x491604001800080ULL,
-    0x100401000402001ULL,
-    0x4820010021001040ULL,
-    0x400402202000812ULL,
-    0x209009005000802ULL,
-    0x810800601800400ULL,
-    0x4301083214000150ULL,
-    0x204026458e001401ULL,
-    0x40204000808000ULL,
-    0x8001008040010020ULL,
-    0x8410820820420010ULL,
-    0x1003001000090020ULL,
-    0x804040008008080ULL,
-    0x12000810020004ULL,
-    0x1000100200040208ULL,
-    0x430000a044020001ULL,
-    0x280009023410300ULL,
-    0xe0100040002240ULL,
-    0x200100401700ULL,
-    0x2244100408008080ULL,
-    0x8000400801980ULL,
-    0x2000810040200ULL,
-    0x8010100228810400ULL,
-    0x2000009044210200ULL,
-    0x4080008040102101ULL,
-    0x40002080411d01ULL,
-    0x2005524060000901ULL,
-    0x502001008400422ULL,
-    0x489a000810200402ULL,
-    0x1004400080a13ULL,
-    0x4000011008020084ULL,
-    0x26002114058042ULL,
-};
-
-// bishop magic number
-const Bitboard BISHOP_MAGICS[64] = {
-    0x89a1121896040240ULL,
-    0x2004844802002010ULL,
-    0x2068080051921000ULL,
-    0x62880a0220200808ULL,
-    0x4042004000000ULL,
-    0x100822020200011ULL,
-    0xc00444222012000aULL,
-    0x28808801216001ULL,
-    0x400492088408100ULL,
-    0x201c401040c0084ULL,
-    0x840800910a0010ULL,
-    0x82080240060ULL,
-    0x2000840504006000ULL,
-    0x30010c4108405004ULL,
-    0x1008005410080802ULL,
-    0x8144042209100900ULL,
-    0x208081020014400ULL,
-    0x4800201208ca00ULL,
-    0xf18140408012008ULL,
-    0x1004002802102001ULL,
-    0x841000820080811ULL,
-    0x40200200a42008ULL,
-    0x800054042000ULL,
-    0x88010400410c9000ULL,
-    0x520040470104290ULL,
-    0x1004040051500081ULL,
-    0x2002081833080021ULL,
-    0x400c00c010142ULL,
-    0x941408200c002000ULL,
-    0x658810000806011ULL,
-    0x188071040440a00ULL,
-    0x4800404002011c00ULL,
-    0x104442040404200ULL,
-    0x511080202091021ULL,
-    0x4022401120400ULL,
-    0x80c0040400080120ULL,
-    0x8040010040820802ULL,
-    0x480810700020090ULL,
-    0x102008e00040242ULL,
-    0x809005202050100ULL,
-    0x8002024220104080ULL,
-    0x431008804142000ULL,
-    0x19001802081400ULL,
-    0x200014208040080ULL,
-    0x3308082008200100ULL,
-    0x41010500040c020ULL,
-    0x4012020c04210308ULL,
-    0x208220a202004080ULL,
-    0x111040120082000ULL,
-    0x6803040141280a00ULL,
-    0x2101004202410000ULL,
-    0x8200000041108022ULL,
-    0x21082088000ULL,
-    0x2410204010040ULL,
-    0x40100400809000ULL,
-    0x822088220820214ULL,
-    0x40808090012004ULL,
-    0x910224040218c9ULL,
-    0x402814422015008ULL,
-    0x90014004842410ULL,
-    0x1000042304105ULL,
-    0x10008830412a00ULL,
-    0x2520081090008908ULL,
-    0x40102000a0a60140ULL,
-};
-
-int count_bits(Bitboard bitboard) {
-  // bit count
+int countBits(Bitboard bitboard) {
   int count = 0;
   
-  // pop bits untill bitboard is empty
-  while (bitboard)
-  {
-      // increment count
+  while (bitboard) {
       count++;
-      
-      // consecutively reset least significant 1st bit
       bitboard &= bitboard - 1;
   }
   
-  // return bit count
   return count;
 }
 
-// get index of LS1B in bitboard
-int get_ls1b_index(Bitboard bitboard) {
-    // make sure bitboard is not empty
+int getLs1bIndex(Bitboard bitboard) {
+
     if (bitboard != 0)
-        // convert trailing zeros before LS1B to ones and count them
-        return count_bits((bitboard & -bitboard) - 1);
+        // Convert trailing zeros before LS1B to ones and count them
+        return countBits((bitboard & -bitboard) - 1);
     
-    // otherwise
-    else
-        // return illegal index
-        return -1;
+    return -1;
 }
 
-// set occupancies
-Bitboard set_occupancy(int index, int bits_in_mask, Bitboard attack_mask)
-{
-    // occupancy map
+Bitboard genOccupancyMask(int index, int bits_in_mask, Bitboard attack_mask) {
     Bitboard occupancy = 0ULL;
     
     // loop over the range of bits within attack mask
-    for (int count = 0; count < bits_in_mask; count++)
-    {
-        // get LS1B index of attacks mask
-        int square = get_ls1b_index(attack_mask);
-        
-        // pop LS1B in attack map
+    for (int i = 0; i < bits_in_mask; i++) {
+        int square = getLs1bIndex(attack_mask);
         pop_bit(attack_mask, square);
         
-        // make sure occupancy is on board
-        if (index & (1 << count))
-            // populate occupancy map
+        if (index & (1 << i)) {
             occupancy |= (1ULL << square);
+        }
     }
     
-    // return occupancy map
     return occupancy;
 }
 
-// mask bishop attacks
-Bitboard mask_bishop_attacks(int square)
-{
-    // attack bitboard
+Bitboard genBishopMovement(int square) {
+    Bitboard movement = 0ULL;
+    
+    // File and rank
+    int f, r;
+    
+    // Target file and rank
+    int tf = square % 8;
+    int tr = square / 8;
+    
+    for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++) movement |= (1ULL << (r * 8 + f));
+    for (r = tr + 1, f = tf - 1; r <= 6 && f >= 1; r++, f--) movement |= (1ULL << (r * 8 + f));
+    for (r = tr - 1, f = tf + 1; r >= 1 && f <= 6; r--, f++) movement |= (1ULL << (r * 8 + f));
+    for (r = tr - 1, f = tf - 1; r >= 1 && f >= 1; r--, f--) movement |= (1ULL << (r * 8 + f));
+    
+    return movement;
+}
+
+Bitboard genRookMovement(int square) {
+    Bitboard movement = 0ULL;
+    
+    // File and rank
+    int f, r;
+    
+    // Target file and rank
+    int tf = square % 8;
+    int tr = square / 8;
+    
+    // generate attacks
+    for (r = tr + 1; r <= 6; r++) movement |= (1ULL << (r * 8 + tf));
+    for (r = tr - 1; r >= 1; r--) movement |= (1ULL << (r * 8 + tf));
+    for (f = tf + 1; f <= 6; f++) movement |= (1ULL << (tr * 8 + f));
+    for (f = tf - 1; f >= 1; f--) movement |= (1ULL << (tr * 8 + f));
+    
+    return movement;
+}
+
+Bitboard bishopAttacksOnTheFly(int square, Bitboard block) {
     Bitboard attacks = 0ULL;
     
     // init files & ranks
     int f, r;
-    
     // init target files & ranks
     int tr = square / 8;
     int tf = square % 8;
     
-    // generate attacks
-    for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++) attacks |= (1ULL << (r * 8 + f));
-    for (r = tr + 1, f = tf - 1; r <= 6 && f >= 1; r++, f--) attacks |= (1ULL << (r * 8 + f));
-    for (r = tr - 1, f = tf + 1; r >= 1 && f <= 6; r--, f++) attacks |= (1ULL << (r * 8 + f));
-    for (r = tr - 1, f = tf - 1; r >= 1 && f >= 1; r--, f--) attacks |= (1ULL << (r * 8 + f));
+    for (r = tr + 1, f = tf + 1; r <= 7 && f <= 7; r++, f++) {
+        attacks |= (1ULL << (r * 8 + f));
+        if (block & (1ULL << (r * 8 + f))) break;
+    }
     
-    // return attack map for bishop on a given square
+    for (r = tr + 1, f = tf - 1; r <= 7 && f >= 0; r++, f--) {
+        attacks |= (1ULL << (r * 8 + f));
+        if (block & (1ULL << (r * 8 + f))) break;
+    }
+    
+    for (r = tr - 1, f = tf + 1; r >= 0 && f <= 7; r--, f++) {
+        attacks |= (1ULL << (r * 8 + f));
+        if (block & (1ULL << (r * 8 + f))) break;
+    }
+    
+    for (r = tr - 1, f = tf - 1; r >= 0 && f >= 0; r--, f--) {
+        attacks |= (1ULL << (r * 8 + f));
+        if (block & (1ULL << (r * 8 + f))) break;
+    }
+    
     return attacks;
 }
 
-// mask rook attacks
-Bitboard mask_rook_attacks(int square)
-{
-    // attacks bitboard
+Bitboard rookAttacksOnTheFly(int square, Bitboard block) {
     Bitboard attacks = 0ULL;
     
     // init files & ranks
     int f, r;
-    
     // init target files & ranks
     int tr = square / 8;
     int tf = square % 8;
     
-    // generate attacks
-    for (r = tr + 1; r <= 6; r++) attacks |= (1ULL << (r * 8 + tf));
-    for (r = tr - 1; r >= 1; r--) attacks |= (1ULL << (r * 8 + tf));
-    for (f = tf + 1; f <= 6; f++) attacks |= (1ULL << (tr * 8 + f));
-    for (f = tf - 1; f >= 1; f--) attacks |= (1ULL << (tr * 8 + f));
-    
-    // return attack map for bishop on a given square
-    return attacks;
-}
-
-// bishop attacks
-Bitboard bishop_attacks_on_the_fly(int square, Bitboard block)
-{
-    // attack bitboard
-    Bitboard attacks = 0ULL;
-    
-    // init files & ranks
-    int f, r;
-    
-    // init target files & ranks
-    int tr = square / 8;
-    int tf = square % 8;
-    
-    // generate attacks
-    for (r = tr + 1, f = tf + 1; r <= 7 && f <= 7; r++, f++)
-    {
-        attacks |= (1ULL << (r * 8 + f));
-        if (block & (1ULL << (r * 8 + f))) break;
-    }
-    
-    for (r = tr + 1, f = tf - 1; r <= 7 && f >= 0; r++, f--)
-    {
-        attacks |= (1ULL << (r * 8 + f));
-        if (block & (1ULL << (r * 8 + f))) break;
-    }
-    
-    for (r = tr - 1, f = tf + 1; r >= 0 && f <= 7; r--, f++)
-    {
-        attacks |= (1ULL << (r * 8 + f));
-        if (block & (1ULL << (r * 8 + f))) break;
-    }
-    
-    for (r = tr - 1, f = tf - 1; r >= 0 && f >= 0; r--, f--)
-    {
-        attacks |= (1ULL << (r * 8 + f));
-        if (block & (1ULL << (r * 8 + f))) break;
-    }
-    
-    // return attack map for bishop on a given square
-    return attacks;
-}
-
-// rook attacks
-Bitboard rook_attacks_on_the_fly(int square, Bitboard block)
-{
-    // attacks bitboard
-    Bitboard attacks = 0ULL;
-    
-    // init files & ranks
-    int f, r;
-    
-    // init target files & ranks
-    int tr = square / 8;
-    int tf = square % 8;
-    
-    // generate attacks
-    for (r = tr + 1; r <= 7; r++)
-    {
+    for (r = tr + 1; r <= 7; r++) {
         attacks |= (1ULL << (r * 8 + tf));
         if (block & (1ULL << (r * 8 + tf))) break;
     }
     
-    for (r = tr - 1; r >= 0; r--)
-    {
+    for (r = tr - 1; r >= 0; r--) {
         attacks |= (1ULL << (r * 8 + tf));
         if (block & (1ULL << (r * 8 + tf))) break;
     }
     
-    for (f = tf + 1; f <= 7; f++)
-    {
+    for (f = tf + 1; f <= 7; f++) {
         attacks |= (1ULL << (tr * 8 + f));
         if (block & (1ULL << (tr * 8 + f))) break;
     }
     
-    for (f = tf - 1; f >= 0; f--)
-    {
+    for (f = tf - 1; f >= 0; f--) {
         attacks |= (1ULL << (tr * 8 + f));
         if (block & (1ULL << (tr * 8 + f))) break;
     }
     
-    // return attack map for bishop on a given square
     return attacks;
 }
 
@@ -424,8 +240,8 @@ void initMoveGenerationTables(void) {
     for (int square = 0; square < 64; square++) {
 
         // Fill movement masks
-        BISHOP_MOVEMENT[square] = mask_bishop_attacks(square);
-        ROOK_MOVEMENT[square] = mask_rook_attacks(square);
+        BISHOP_MOVEMENT[square] = genBishopMovement(square);
+        ROOK_MOVEMENT[square] = genRookMovement(square);
         
         Bitboard bishopMask = BISHOP_MOVEMENT[square];
         Bitboard rookMask = ROOK_MOVEMENT[square];
@@ -435,15 +251,15 @@ void initMoveGenerationTables(void) {
         int rookOccupancyVariations = 1 << rookRelevantBits;
 
         for (int i = 0; i < bishopOccupancyVariations; i++) {
-            Bitboard occupancy = set_occupancy(i, bishopRelevantBits, bishopMask);
+            Bitboard occupancy = genOccupancyMask(i, bishopRelevantBits, bishopMask);
             Bitboard magic_index = occupancy * BISHOP_MAGICS[square] >> 64 - bishopRelevantBits;
-            BISHOP_ATTACKS[square][magic_index] = bishop_attacks_on_the_fly(square, occupancy);                
+            BISHOP_ATTACKS[square][magic_index] = bishopAttacksOnTheFly(square, occupancy);                
         }
 
         for (int i = 0; i < rookOccupancyVariations; i++) {
-            Bitboard occupancy = set_occupancy(i, rookRelevantBits, rookMask);
+            Bitboard occupancy = genOccupancyMask(i, rookRelevantBits, rookMask);
             Bitboard magic_index = occupancy * ROOK_MAGICS[square] >> 64 - rookRelevantBits;
-            ROOK_ATTACKS[square][magic_index] = rook_attacks_on_the_fly(square, occupancy);                
+            ROOK_ATTACKS[square][magic_index] = rookAttacksOnTheFly(square, occupancy);                
         }
     }
 }
@@ -462,10 +278,7 @@ Bitboard getRookAttacks(int square, Bitboard occupancy) {
 	return ROOK_ATTACKS[square][occupancy];
 }
 
-Move* legalMoves(Board board, int* length) {
-    Move* first = malloc(sizeof(Move));
-    Move* move = first;
-
+int legalMoves(Board board, Move moves[]) {
     Bitboard occupancyWhite = 0;
     Bitboard occupancyBlack = 0;
     for (int i = 0; i < 6;i++) {
@@ -473,13 +286,13 @@ Move* legalMoves(Board board, int* length) {
         occupancyBlack |= *(&(board.pawn_B)+i);
     }
     Bitboard occupancy = occupancyBlack | occupancyWhite;
-
+    int length = 0;
     if (board.turn) {
         // Pawn pushes
         Bitboard singlePush = board.pawn_W << 8;
         singlePush ^= singlePush & occupancy;
 
-        Bitboard doublePush = (board.pawn_W & pawnStartWhite) << 8*2;
+        Bitboard doublePush = (board.pawn_W & PAWN_START_WHITE) << 8*2;
         doublePush ^= doublePush & occupancy;
         doublePush = doublePush >> 8;
         doublePush &= singlePush;
@@ -487,16 +300,18 @@ Move* legalMoves(Board board, int* length) {
 
         for (int i = 0; i < 64;i++) {
             if (getBit(singlePush, i)) {
-                move->fromSquare = i-8;
-                move->toSquare = i;
-                move++;
-                (*length)++;
+                Move move;
+                move.fromSquare = i-8;
+                move.toSquare = i;
+                moves[length] = move;
+                length++;
             }
             if (getBit(doublePush, i)) {
-                move->fromSquare = i-8*2;
-                move->toSquare = i;
-                move++;
-                (*length)++;
+                Move move;
+                move.fromSquare = i-8*2;
+                move.toSquare = i;
+                moves[length] = move;
+                length++;
             }
         }
 
@@ -504,17 +319,19 @@ Move* legalMoves(Board board, int* length) {
         for (int i = 0; i < 64;i++) {
             if (getBit(board.pawn_W, i)) {
                 if (PAWN_W_ATTACKS_EAST[i] & occupancyBlack) {
-                    move->fromSquare = i;
-                    move->toSquare = i+7;
-                    move++;
-                    (*length)++;
+                    Move move;
+                    move.fromSquare = i;
+                    move.toSquare = i+7;
+                    moves[length] = move;
+                    length++;
                 }
                 
                 if (PAWN_W_ATTACKS_WEST[i] & occupancyBlack) {
-                    move->fromSquare = i;
-                    move->toSquare = i+9;
-                    move++;
-                    (*length)++;
+                    Move move;
+                    move.fromSquare = i;
+                    move.toSquare = i+9;
+                    moves[length] = move;
+                    length++;
                 }
             }
         }
@@ -531,10 +348,11 @@ Move* legalMoves(Board board, int* length) {
         kingMoves ^= kingMoves & occupancyWhite;
         for (int i = 0; i < 64;i++) {
             if (getBit(kingMoves, i)) {
-                move->fromSquare = kingSquare;
-                move->toSquare = i;
-                move++;
-                (*length)++;
+                Move move;
+                move.fromSquare = kingSquare;
+                move.toSquare = i;
+                moves[length] = move;
+                length++;
             }
         }
 
@@ -545,10 +363,11 @@ Move* legalMoves(Board board, int* length) {
                 bishopAttacks ^= bishopAttacks & occupancyWhite;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(bishopAttacks, j)) {
-                        move->fromSquare = i;
-                        move->toSquare = j;
-                        move++;
-                        (*length)++;
+                        Move move;
+                        move.fromSquare = i;
+                        move.toSquare = j;
+                        moves[length] = move;
+                        length++;
                     }
                 }
             }
@@ -560,10 +379,11 @@ Move* legalMoves(Board board, int* length) {
                 rookAttacks ^= rookAttacks & occupancyWhite;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(rookAttacks, j)) {
-                        move->fromSquare = i;
-                        move->toSquare = j;
-                        move++;
-                        (*length)++;
+                        Move move;
+                        move.fromSquare = i;
+                        move.toSquare = j;
+                        moves[length] = move;
+                        length++;
                     }
                 }
             }
@@ -581,10 +401,11 @@ Move* legalMoves(Board board, int* length) {
 
                 for (int j = 0; j < 64; j++) {
                     if (getBit(queenAttacks, j)) {
-                        move->fromSquare = i;
-                        move->toSquare = j;
-                        move++;
-                        (*length)++;
+                        Move move;
+                        move.fromSquare = i;
+                        move.toSquare = j;
+                        moves[length] = move;
+                        length++;
                     }
                 }
             }
@@ -594,7 +415,7 @@ Move* legalMoves(Board board, int* length) {
         Bitboard singlePush = board.pawn_B >> 8;
         singlePush ^= singlePush & occupancy;
 
-        Bitboard doublePush = (board.pawn_B & pawnStartBlack) >> 8*2;
+        Bitboard doublePush = (board.pawn_B & PAWN_START_BLACK) >> 8*2;
         doublePush ^= doublePush & occupancy;
         doublePush = doublePush << 8;
         doublePush &= singlePush;
@@ -602,16 +423,18 @@ Move* legalMoves(Board board, int* length) {
 
         for (int i = 0; i < 64;i++) {
             if (getBit(singlePush, i)) {
-                move->fromSquare = i+8;
-                move->toSquare = i;
-                move++;
-                (*length)++;
+                Move move;
+                move.fromSquare = i+8;
+                move.toSquare = i;
+                moves[length] = move;
+                length++;
             }
             if (getBit(doublePush, i)) {
-                move->fromSquare = i+8*2;
-                move->toSquare = i;
-                move++;
-                (*length)++;
+                Move move;
+                move.fromSquare = i+8*2;
+                move.toSquare = i;
+                moves[length] = move;
+                length++;
             }
         }
 
@@ -619,17 +442,19 @@ Move* legalMoves(Board board, int* length) {
         for (int i = 0; i < 64;i++) {
             if (getBit(board.pawn_B, i)) {
                 if (PAWN_B_ATTACKS_EAST[i] & occupancyWhite) {
-                    move->fromSquare = i;
-                    move->toSquare = i-7;
-                    move++;
-                    (*length)++;
+                    Move move;
+                    move.fromSquare = i;
+                    move.toSquare = i-7;
+                    moves[length] = move;
+                    length++;
                 }
                 
                 if (PAWN_B_ATTACKS_WEST[i] & occupancyWhite) {
-                    move->fromSquare = i;
-                    move->toSquare = i-9;
-                    move++;
-                    (*length)++;
+                    Move move;
+                    move.fromSquare = i;
+                    move.toSquare = i-9;
+                    moves[length] = move;
+                    length++;
                 }
             }
         }
@@ -646,10 +471,11 @@ Move* legalMoves(Board board, int* length) {
         kingMoves ^= kingMoves & occupancyBlack;
         for (int i = 0; i < 64;i++) {
             if (getBit(kingMoves, i)) {
-                move->fromSquare = kingSquare;
-                move->toSquare = i;
-                move++;
-                (*length)++;
+                Move move;
+                move.fromSquare = kingSquare;
+                move.toSquare = i;
+                moves[length] = move;
+                length++;
             }
         }
 
@@ -660,10 +486,11 @@ Move* legalMoves(Board board, int* length) {
                 bishopAttacks ^= bishopAttacks & occupancyBlack;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(bishopAttacks, j)) {
-                        move->fromSquare = i;
-                        move->toSquare = j;
-                        move++;
-                        (*length)++;
+                        Move move;
+                        move.fromSquare = i;
+                        move.toSquare = j;
+                        moves[length] = move;
+                        length++;
                     }
                 }
             }
@@ -675,10 +502,11 @@ Move* legalMoves(Board board, int* length) {
                 rookAttacks ^= rookAttacks & occupancyBlack;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(rookAttacks, j)) {
-                        move->fromSquare = i;
-                        move->toSquare = j;
-                        move++;
-                        (*length)++;
+                        Move move;
+                        move.fromSquare = i;
+                        move.toSquare = j;
+                        moves[length] = move;
+                        length++;
                     }
                 }
             }
@@ -696,17 +524,18 @@ Move* legalMoves(Board board, int* length) {
 
                 for (int j = 0; j < 64; j++) {
                     if (getBit(queenAttacks, j)) {
-                        move->fromSquare = i;
-                        move->toSquare = j;
-                        move++;
-                        (*length)++;
+                        Move move;
+                        move.fromSquare = i;
+                        move.toSquare = j;
+                        moves[length] = move;
+                        length++;
                     }
                 }
             }
         }
     }
 
-    return first;
+    return length;
 }
 
 void sanToMove(Move* move, char* san) {
@@ -718,7 +547,7 @@ void sanToMove(Move* move, char* san) {
     move->toSquare = 8 * (toRank) + toFile;
 }
 
-void moveToSan(Move move, char* san) {
+void moveToSan(Move move, char san[]) {
     san[0] = SQUARE_NAMES[move.fromSquare][0];
     san[1] = SQUARE_NAMES[move.fromSquare][1];
     san[2] = SQUARE_NAMES[move.toSquare][0];
