@@ -29,6 +29,17 @@ void pushSan(Board* board, char* san) {
 }
 
 void pushMove(Board* board, Move move) {
+    // En passant capture
+    if (move.toSquare == board->epSquare) {
+        if (board->turn) {
+            int capturedSquare = board->epSquare -8;
+            clearBit(&(board->pawn_B), capturedSquare);
+        } else {
+            int capturedSquare = board->epSquare + 8;
+            clearBit(&(board->pawn_W), capturedSquare);
+        }
+    }
+
     // Ep square
     board->epSquare = -1;
 
