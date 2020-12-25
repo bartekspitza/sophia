@@ -48,6 +48,8 @@ enum SQUARES {
     H8, G8, F8, E8, D8, C8, B8, A8
 };
 
+enum FILES {H, G, F, E, D, C, B, A};
+
 extern char SQUARE_NAMES[64][3];
 
 #endif

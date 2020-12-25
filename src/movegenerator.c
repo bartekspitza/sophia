@@ -69,6 +69,8 @@ _5(H6,G6,G7,G8,H8),_8(F6,F7,F8,G6,G8,H6,H7,H8),_8(E6,E7,E8,F6,F8,G6,G7,G8),_8(D6
 _3(G8,G7,H7)      ,_5(F8,F7,G7,H8,H7)         ,_5(E8,E7,F7,G8,G7)         ,_5(D8,D7,E7,F8,F7)         ,_5(C8,C7,D7,E8,E7)         ,_5(B8,B7,C7,D8,D7)         ,_5(A8,A7,B7,C8,C7)         ,_3(B8,B7,A7)
 };
 
+Bitboard KNIGHT_MOVEMENT[64];
+
 int ROOK_RELEVANT_BITS[64] = {
     12, 11, 11, 11, 11, 11, 11, 12,
     11, 10, 10, 10, 10, 10, 10, 11,
@@ -91,6 +93,7 @@ int BISHOP_RELEVANT_BITS[64] = {
     5, 5, 5, 5, 5, 5, 5, 5,
     6, 5, 5, 5, 5, 5, 5, 6
 };
+
 
 // Movement masks
 Bitboard BISHOP_MOVEMENT[64];
@@ -236,7 +239,28 @@ Bitboard rookAttacksOnTheFly(int square, Bitboard block) {
     return attacks;
 }
 
+
+void initKnightMovementTable(void) {
+    for (int i = 0; i < 64; i++) {
+        Bitboard sqBb = 1LL << (63-i);
+        Bitboard bb = 0LL;
+        int file = i%8;
+
+        if (file != H && i < H7) { bb |= sqBb >> 15;} // UP RIGHT
+        if (file != A && i < H7) { bb |= sqBb >> 17;} // UP LEFT
+        if (file != H && i > A2) { bb |= sqBb << 17;} // DOWN RIGHT
+        if (file != A && i > A2) { bb |= sqBb << 15;} // DOWN RIGHT
+        if (file < B && i < A7) { bb |= sqBb >> 10;} // LEFT UP
+        if (file < B && i > H2) { bb |= sqBb << 6;} // LEFT DOWN
+        if (file > G && i < H8) { bb |= sqBb >> 6;} // RIGHT UP
+        if (file > G && i > A1) { bb |= sqBb << 10;} // RIGHT DOWN
+
+        KNIGHT_MOVEMENT[63-i] = bb;
+    }
+}
+
 void initMoveGenerationTables(void) {
+    initKnightMovementTable();
     for (int square = 0; square < 64; square++) {
 
         // Fill movement masks
@@ -410,6 +434,23 @@ int legalMoves(Board board, Move moves[]) {
                 }
             }
         }
+
+        // Knight
+        for (int i = 0; i < 64; i++) {
+            if (getBit(board.knight_W, i)) {
+                Bitboard attacks = KNIGHT_MOVEMENT[i] ^ (KNIGHT_MOVEMENT[i] & occupancyWhite);
+
+                for (int j = 0; j < 64; j++) {
+                    if (getBit(attacks, j)) {
+                        Move move;
+                        move.fromSquare = i;
+                        move.toSquare = j;
+                        moves[length] = move;
+                        length++;
+                    }
+                }
+            }
+        }
     } else {
         // Pawn pushes
         Bitboard singlePush = board.pawn_B >> 8;
@@ -524,6 +565,23 @@ int legalMoves(Board board, Move moves[]) {
 
                 for (int j = 0; j < 64; j++) {
                     if (getBit(queenAttacks, j)) {
+                        Move move;
+                        move.fromSquare = i;
+                        move.toSquare = j;
+                        moves[length] = move;
+                        length++;
+                    }
+                }
+            }
+        }
+
+        // Knight
+        for (int i = 0; i < 64; i++) {
+            if (getBit(board.knight_B, i)) {
+                Bitboard attacks = KNIGHT_MOVEMENT[i] ^ (KNIGHT_MOVEMENT[i] & occupancyBlack);
+
+                for (int j = 0; j < 64; j++) {
+                    if (getBit(attacks, j)) {
                         Move move;
                         move.fromSquare = i;
                         move.toSquare = j;
