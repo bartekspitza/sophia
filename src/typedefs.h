@@ -28,8 +28,8 @@ typedef struct {
 } Board;
 
 typedef struct {
-    Bitboard fromSquare;
-    Bitboard toSquare;
+    int fromSquare;
+    int toSquare;
     int promotion;
 } Move;
 

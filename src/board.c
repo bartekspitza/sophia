@@ -29,9 +29,21 @@ void pushSan(Board* board, char* san) {
 }
 
 void pushMove(Board* board, Move move) {
-    Bitboard* bb = board->turn ? &(board->pawn_W) : &(board->pawn_W);
+    // Ep square
+    board->epSquare = -1;
 
-    for (int i = 0; i < 12; i++) {
+    Bitboard from = 1LL << move.fromSquare;
+    bool starterPawnMoved = from & (board->turn ? PAWN_START_WHITE : PAWN_START_BLACK);
+    int distanceCovered = abs(move.fromSquare - move.toSquare);
+    int twoRanks = 16;
+
+    if (starterPawnMoved && distanceCovered == twoRanks) {
+        board->epSquare = board->turn ? move.fromSquare + 8 : move.fromSquare - 8;
+    }
+
+    // Make move
+    Bitboard* bb = board->turn ? &(board->pawn_W) : &(board->pawn_B);
+    for (int i = 0; i < 6; i++) {
         if (getBit(*bb, move.fromSquare)) {
             clearBit(bb, move.fromSquare);
             setBit(bb, move.toSquare);
@@ -40,7 +52,8 @@ void pushMove(Board* board, Move move) {
         }
         ++bb;
     }
-    // Toggle the turn
+
+    // Toggle turn
     board->turn ^= 1;
 }
 
