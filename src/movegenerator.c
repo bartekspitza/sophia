@@ -386,16 +386,17 @@ int legalMoves(Board board, Move moves[]) {
     Bitboard doublePush;
     pawnSingleAndDblPushes(board, occupancy, &singlePush, &doublePush);
 
-    if (board.turn) {
-        for (int i = 0; i < 64;i++) {
+    // Iterate over squares
+    for (int sq = 0; sq < 64; sq++) {
 
-            if (getBit(singlePush, i)) {
-                int fromSquare = i-8;
-                bool isPromoting = fromSquare >= H7 && fromSquare <= A7;
+        if (getBit(singlePush, sq)) {
+            int fromSquare = board.turn ? sq-8 : sq+8;
+            bool isPromoting = board.turn ? (fromSquare >= H7 && fromSquare <= A7) : (fromSquare >= H2 && fromSquare <= A2);
 
-                // Pawn single push
-                addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, i, moves, &length);
+            // Pawn single push
+            addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, sq, moves, &length);
 
+            if (board.turn) {
                 // Pawn east attack
                 if (PAWN_W_ATTACKS_EAST[fromSquare] & occupancyBlack) {
                     int toSquare = fromSquare + 7;
@@ -407,84 +408,7 @@ int legalMoves(Board board, Move moves[]) {
                     int toSquare = fromSquare + 9;
                     addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, toSquare, moves, &length);
                 }
-            }
-
-            // Pawn double pushes
-            if (getBit(doublePush, i)) {
-                int fromSquare = i-8*2;
-                Move move = getMove(fromSquare, i, NO_PROMOTION);
-                addMove(move, moves, &length);
-            }
- 
-            // King
-            if (getBit(kingMovesMask, i)) {
-                Move move = getMove(kingSquare, i, -1);
-                addMove(move, moves, &length);
-            }
-
-            // Bishop
-            if (getBit(board.bishop_W, i)) {
-                Bitboard bishopAttacks = getBishopAttacks(i, occupancy);
-                bishopAttacks ^= bishopAttacks & occupancyWhite;
-                for (int j = 0; j < 64; j++) {
-                    if (getBit(bishopAttacks, j)) {
-                        Move move = getMove(i, j, NO_PROMOTION);
-                        addMove(move, moves, &length);
-                    }
-                }
-            }
-
-            // Rook
-            if (getBit(board.rook_W, i)) {
-                Bitboard rookAttacks = getRookAttacks(i, occupancy);
-                rookAttacks ^= rookAttacks & occupancyWhite;
-                for (int j = 0; j < 64; j++) {
-                    if (getBit(rookAttacks, j)) {
-                        Move move = getMove(i, j, NO_PROMOTION);
-                        addMove(move, moves, &length);
-                    }
-                }
-            }
-
-            // Queen
-            if (getBit(board.queen_W, i)) {
-                Bitboard rookAttacks = getRookAttacks(i, occupancy);
-                rookAttacks ^= rookAttacks & occupancyWhite;
-
-                Bitboard bishopAttacks = getBishopAttacks(i, occupancy);
-                bishopAttacks ^= bishopAttacks & occupancyWhite;
-                Bitboard queenAttacks = bishopAttacks | rookAttacks;
-
-                for (int j = 0; j < 64; j++) {
-                    if (getBit(queenAttacks, j)) {
-                        Move move = getMove(i, j, NO_PROMOTION);
-                        addMove(move, moves, &length);
-                    }
-                }
-            }
-
-            // Knight
-            if (getBit(board.knight_W, i)) {
-                Bitboard attacks = KNIGHT_MOVEMENT[i] ^ (KNIGHT_MOVEMENT[i] & occupancyWhite);
-
-                for (int j = 0; j < 64; j++) {
-                    if (getBit(attacks, j)) {
-                        Move move = getMove(i, j, NO_PROMOTION);
-                        addMove(move, moves, &length);
-                    }
-                }
-            }
-        }
-    } else {
-        for (int i = 0; i < 64; i++) {
-            
-            if (getBit(singlePush, i)) {
-                int fromSquare = i+8;
-                bool isPromoting = fromSquare >= H2 && fromSquare <= A2;
-
-                // Pawn single push
-                addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, i, moves, &length);
-
+            } else {
                 // Pawn east attack
                 if (PAWN_B_ATTACKS_EAST[fromSquare] & occupancyBlack) {
                     int toSquare = fromSquare - 7;
@@ -497,68 +421,123 @@ int legalMoves(Board board, Move moves[]) {
                     addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, toSquare, moves, &length);
                 }
             }
+        }
 
-            // Pawn double pushes
-            if (getBit(doublePush, i)) {
-                int fromSquare = i+8*2;
-                Move move = getMove(fromSquare, i, NO_PROMOTION);
-                addMove(move, moves, &length);
-            }
- 
-            // King
-            if (getBit(kingMovesMask, i)) {
-                Move move = getMove(kingSquare, i, -1);
-                addMove(move, moves, &length);
-            }
+        // Pawn double pushes
+        if (getBit(doublePush, sq)) {
+            int fromSquare = board.turn ? sq-8*2 : sq+8*2;
+            Move move = getMove(fromSquare, sq, NO_PROMOTION);
+            addMove(move, moves, &length);
+        }
 
+        // King
+        if (getBit(kingMovesMask, sq)) {
+            Move move = getMove(kingSquare, sq, NO_PROMOTION);
+            addMove(move, moves, &length);
+        }
+
+        if (board.turn) {
             // Bishop
-            if (getBit(board.bishop_B, i)) {
-                Bitboard bishopAttacks = getBishopAttacks(i, occupancy);
-                bishopAttacks ^= bishopAttacks & occupancyBlack;
+            if (getBit(board.bishop_W, sq)) {
+                Bitboard bishopAttacks = getBishopAttacks(sq, occupancy);
+                bishopAttacks ^= bishopAttacks & occupancyWhite;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(bishopAttacks, j)) {
-                        Move move = getMove(i, j, NO_PROMOTION);
+                        Move move = getMove(sq, j, NO_PROMOTION);
                         addMove(move, moves, &length);
                     }
                 }
             }
 
             // Rook
-            if (getBit(board.rook_B, i)) {
-                Bitboard rookAttacks = getRookAttacks(i, occupancy);
-                rookAttacks ^= rookAttacks & occupancyBlack;
+            if (getBit(board.rook_W, sq)) {
+                Bitboard rookAttacks = getRookAttacks(sq, occupancy);
+                rookAttacks ^= rookAttacks & occupancyWhite;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(rookAttacks, j)) {
-                        Move move = getMove(i, j, NO_PROMOTION);
+                        Move move = getMove(sq, j, NO_PROMOTION);
                         addMove(move, moves, &length);
                     }
                 }
             }
 
             // Queen
-            if (getBit(board.queen_B, i)) {
-                Bitboard rookAttacks = getRookAttacks(i, occupancy);
-                rookAttacks ^= rookAttacks & occupancyBlack;
+            if (getBit(board.queen_W, sq)) {
+                Bitboard rookAttacks = getRookAttacks(sq, occupancy);
+                rookAttacks ^= rookAttacks & occupancyWhite;
 
-                Bitboard bishopAttacks = getBishopAttacks(i, occupancy);
-                bishopAttacks ^= bishopAttacks & occupancyBlack;
+                Bitboard bishopAttacks = getBishopAttacks(sq, occupancy);
+                bishopAttacks ^= bishopAttacks & occupancyWhite;
                 Bitboard queenAttacks = bishopAttacks | rookAttacks;
 
                 for (int j = 0; j < 64; j++) {
                     if (getBit(queenAttacks, j)) {
-                        Move move = getMove(i, j, NO_PROMOTION);
+                        Move move = getMove(sq, j, NO_PROMOTION);
                         addMove(move, moves, &length);
                     }
                 }
             }
 
             // Knight
-            if (getBit(board.knight_B, i)) {
-                Bitboard attacks = KNIGHT_MOVEMENT[i] ^ (KNIGHT_MOVEMENT[i] & occupancyBlack);
+            if (getBit(board.knight_W, sq)) {
+                Bitboard attacks = KNIGHT_MOVEMENT[sq] ^ (KNIGHT_MOVEMENT[sq] & occupancyWhite);
 
                 for (int j = 0; j < 64; j++) {
                     if (getBit(attacks, j)) {
-                        Move move = getMove(i, j, NO_PROMOTION);
+                        Move move = getMove(sq, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
+                    }
+                }
+            }
+        } else {
+            // Bishop
+            if (getBit(board.bishop_B, sq)) {
+                Bitboard bishopAttacks = getBishopAttacks(sq, occupancy);
+                bishopAttacks ^= bishopAttacks & occupancyBlack;
+                for (int j = 0; j < 64; j++) {
+                    if (getBit(bishopAttacks, j)) {
+                        Move move = getMove(sq, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
+                    }
+                }
+            }
+
+            // Rook
+            if (getBit(board.rook_B, sq)) {
+                Bitboard rookAttacks = getRookAttacks(sq, occupancy);
+                rookAttacks ^= rookAttacks & occupancyBlack;
+                for (int j = 0; j < 64; j++) {
+                    if (getBit(rookAttacks, j)) {
+                        Move move = getMove(sq, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
+                    }
+                }
+            }
+
+            // Queen
+            if (getBit(board.queen_B, sq)) {
+                Bitboard rookAttacks = getRookAttacks(sq, occupancy);
+                rookAttacks ^= rookAttacks & occupancyBlack;
+
+                Bitboard bishopAttacks = getBishopAttacks(sq, occupancy);
+                bishopAttacks ^= bishopAttacks & occupancyBlack;
+                Bitboard queenAttacks = bishopAttacks | rookAttacks;
+
+                for (int j = 0; j < 64; j++) {
+                    if (getBit(queenAttacks, j)) {
+                        Move move = getMove(sq, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
+                    }
+                }
+            }
+
+            // Knight
+            if (getBit(board.knight_B, sq)) {
+                Bitboard attacks = KNIGHT_MOVEMENT[sq] ^ (KNIGHT_MOVEMENT[sq] & occupancyBlack);
+
+                for (int j = 0; j < 64; j++) {
+                    if (getBit(attacks, j)) {
+                        Move move = getMove(sq, j, NO_PROMOTION);
                         addMove(move, moves, &length);
                     }
                 }
