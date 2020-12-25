@@ -13,6 +13,7 @@
 #define pop_bit(bitboard, square) (get_bit(bitboard, square) ? (bitboard ^= (1ULL << square)) : 0)
 #define get_bit(bitboard, square) (bitboard & (1ULL << square))
 #define set_bit(bitboard, square) (bitboard |= (1ULL << square))
+#define getMove(from, to, promo) {.fromSquare=from, .toSquare=to, .promotion=promo}
 
 
 Bitboard PAWN_START_WHITE = 0xFF00;
@@ -101,6 +102,10 @@ Bitboard ROOK_MOVEMENT[64];
 // All the different attack masks combinations (decided by blockers) for each square
 Bitboard BISHOP_ATTACKS[64][512];
 Bitboard ROOK_ATTACKS[64][4096];
+
+int WHITE_PROMOTIONS[4] = {QUEEN_W, BISHOP_W, KNIGHT_W, ROOK_W};
+int BLACK_PROMOTIONS[4] = {QUEEN_B, BISHOP_B, KNIGHT_B, ROOK_B};
+int NO_PROMOTION = -1;
 
 int countBits(Bitboard bitboard) {
   int count = 0;
@@ -302,6 +307,11 @@ Bitboard getRookAttacks(int square, Bitboard occupancy) {
 	return ROOK_ATTACKS[square][occupancy];
 }
 
+void addMove(Move move, Move moves[], int* indx) {
+    moves[*indx] = move;
+    *indx += 1;
+}
+
 int legalMoves(Board board, Move moves[]) {
     Bitboard occupancyWhite = 0;
     Bitboard occupancyBlack = 0;
@@ -311,6 +321,7 @@ int legalMoves(Board board, Move moves[]) {
     }
     Bitboard occupancy = occupancyBlack | occupancyWhite;
     int length = 0;
+
     if (board.turn) {
         // Pawn pushes
         Bitboard singlePush = board.pawn_W << 8;
@@ -324,18 +335,21 @@ int legalMoves(Board board, Move moves[]) {
 
         for (int i = 0; i < 64;i++) {
             if (getBit(singlePush, i)) {
-                Move move;
-                move.fromSquare = i-8;
-                move.toSquare = i;
-                moves[length] = move;
-                length++;
+                int fromSquare = i-8;
+
+                if (fromSquare >= H7 && fromSquare <= A7) { // Promotion
+                    for (int p = 0; p < 4;p++) {
+                        Move move = getMove(fromSquare, i, WHITE_PROMOTIONS[p]);
+                        addMove(move, moves, &length);
+                    }
+                } else {
+                    Move move = getMove(fromSquare, i, NO_PROMOTION);
+                    addMove(move, moves, &length);
+                }
             }
             if (getBit(doublePush, i)) {
-                Move move;
-                move.fromSquare = i-8*2;
-                move.toSquare = i;
-                moves[length] = move;
-                length++;
+                Move move = getMove(i-8*2, i, NO_PROMOTION);
+                addMove(move, moves, &length);
             }
         }
 
@@ -343,19 +357,13 @@ int legalMoves(Board board, Move moves[]) {
         for (int i = 0; i < 64;i++) {
             if (getBit(board.pawn_W, i)) {
                 if (PAWN_W_ATTACKS_EAST[i] & occupancyBlack) {
-                    Move move;
-                    move.fromSquare = i;
-                    move.toSquare = i+7;
-                    moves[length] = move;
-                    length++;
+                    Move move = getMove(i, i+7, NO_PROMOTION);
+                    addMove(move, moves, &length);
                 }
                 
                 if (PAWN_W_ATTACKS_WEST[i] & occupancyBlack) {
-                    Move move;
-                    move.fromSquare = i;
-                    move.toSquare = i+9;
-                    moves[length] = move;
-                    length++;
+                    Move move = getMove(i, i+9, NO_PROMOTION);
+                    addMove(move, moves, &length);
                 }
             }
         }
@@ -372,11 +380,8 @@ int legalMoves(Board board, Move moves[]) {
         kingMoves ^= kingMoves & occupancyWhite;
         for (int i = 0; i < 64;i++) {
             if (getBit(kingMoves, i)) {
-                Move move;
-                move.fromSquare = kingSquare;
-                move.toSquare = i;
-                moves[length] = move;
-                length++;
+                Move move = getMove(kingSquare, i, -1);
+                addMove(move, moves, &length);
             }
         }
 
@@ -387,11 +392,8 @@ int legalMoves(Board board, Move moves[]) {
                 bishopAttacks ^= bishopAttacks & occupancyWhite;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(bishopAttacks, j)) {
-                        Move move;
-                        move.fromSquare = i;
-                        move.toSquare = j;
-                        moves[length] = move;
-                        length++;
+                        Move move = getMove(i, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
                     }
                 }
             }
@@ -403,11 +405,8 @@ int legalMoves(Board board, Move moves[]) {
                 rookAttacks ^= rookAttacks & occupancyWhite;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(rookAttacks, j)) {
-                        Move move;
-                        move.fromSquare = i;
-                        move.toSquare = j;
-                        moves[length] = move;
-                        length++;
+                        Move move = getMove(i, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
                     }
                 }
             }
@@ -425,11 +424,8 @@ int legalMoves(Board board, Move moves[]) {
 
                 for (int j = 0; j < 64; j++) {
                     if (getBit(queenAttacks, j)) {
-                        Move move;
-                        move.fromSquare = i;
-                        move.toSquare = j;
-                        moves[length] = move;
-                        length++;
+                        Move move = getMove(i, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
                     }
                 }
             }
@@ -442,11 +438,8 @@ int legalMoves(Board board, Move moves[]) {
 
                 for (int j = 0; j < 64; j++) {
                     if (getBit(attacks, j)) {
-                        Move move;
-                        move.fromSquare = i;
-                        move.toSquare = j;
-                        moves[length] = move;
-                        length++;
+                        Move move = getMove(i, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
                     }
                 }
             }
@@ -464,18 +457,12 @@ int legalMoves(Board board, Move moves[]) {
 
         for (int i = 0; i < 64;i++) {
             if (getBit(singlePush, i)) {
-                Move move;
-                move.fromSquare = i+8;
-                move.toSquare = i;
-                moves[length] = move;
-                length++;
+                Move move = getMove(i+8, i, NO_PROMOTION);
+                addMove(move, moves, &length);
             }
             if (getBit(doublePush, i)) {
-                Move move;
-                move.fromSquare = i+8*2;
-                move.toSquare = i;
-                moves[length] = move;
-                length++;
+                Move move = getMove(i+8*2, i, NO_PROMOTION);
+                addMove(move, moves, &length);
             }
         }
 
@@ -483,19 +470,13 @@ int legalMoves(Board board, Move moves[]) {
         for (int i = 0; i < 64;i++) {
             if (getBit(board.pawn_B, i)) {
                 if (PAWN_B_ATTACKS_EAST[i] & occupancyWhite) {
-                    Move move;
-                    move.fromSquare = i;
-                    move.toSquare = i-7;
-                    moves[length] = move;
-                    length++;
+                    Move move = getMove(i, i-7, NO_PROMOTION);
+                    addMove(move, moves, &length);
                 }
                 
                 if (PAWN_B_ATTACKS_WEST[i] & occupancyWhite) {
-                    Move move;
-                    move.fromSquare = i;
-                    move.toSquare = i-9;
-                    moves[length] = move;
-                    length++;
+                    Move move = getMove(i, i-9, NO_PROMOTION);
+                    addMove(move, moves, &length);
                 }
             }
         }
@@ -512,11 +493,8 @@ int legalMoves(Board board, Move moves[]) {
         kingMoves ^= kingMoves & occupancyBlack;
         for (int i = 0; i < 64;i++) {
             if (getBit(kingMoves, i)) {
-                Move move;
-                move.fromSquare = kingSquare;
-                move.toSquare = i;
-                moves[length] = move;
-                length++;
+                Move move = getMove(kingSquare, i, NO_PROMOTION);
+                addMove(move, moves, &length);
             }
         }
 
@@ -527,11 +505,8 @@ int legalMoves(Board board, Move moves[]) {
                 bishopAttacks ^= bishopAttacks & occupancyBlack;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(bishopAttacks, j)) {
-                        Move move;
-                        move.fromSquare = i;
-                        move.toSquare = j;
-                        moves[length] = move;
-                        length++;
+                        Move move = getMove(i, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
                     }
                 }
             }
@@ -543,11 +518,8 @@ int legalMoves(Board board, Move moves[]) {
                 rookAttacks ^= rookAttacks & occupancyBlack;
                 for (int j = 0; j < 64; j++) {
                     if (getBit(rookAttacks, j)) {
-                        Move move;
-                        move.fromSquare = i;
-                        move.toSquare = j;
-                        moves[length] = move;
-                        length++;
+                        Move move = getMove(i, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
                     }
                 }
             }
@@ -565,11 +537,8 @@ int legalMoves(Board board, Move moves[]) {
 
                 for (int j = 0; j < 64; j++) {
                     if (getBit(queenAttacks, j)) {
-                        Move move;
-                        move.fromSquare = i;
-                        move.toSquare = j;
-                        moves[length] = move;
-                        length++;
+                        Move move = getMove(i, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
                     }
                 }
             }
@@ -582,11 +551,8 @@ int legalMoves(Board board, Move moves[]) {
 
                 for (int j = 0; j < 64; j++) {
                     if (getBit(attacks, j)) {
-                        Move move;
-                        move.fromSquare = i;
-                        move.toSquare = j;
-                        moves[length] = move;
-                        length++;
+                        Move move = getMove(i, j, NO_PROMOTION);
+                        addMove(move, moves, &length);
                     }
                 }
             }

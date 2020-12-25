@@ -30,6 +30,7 @@ typedef struct {
 typedef struct {
     Bitboard fromSquare;
     Bitboard toSquare;
+    int promotion;
 } Move;
 
 enum PIECES {

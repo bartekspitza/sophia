@@ -4,7 +4,7 @@
 
 int main() {
     Board board;
-    setFen(&board, "4k3/8/8/3r4/3q1b2/8/1P6/4K3 b - - 0 1");
+    setFen(&board, "3k4/6P1/8/8/8/8/8/3K4 w - - 0 1");
     printBoard(board);
 
     initMoveGenerationTables();
@@ -16,7 +16,7 @@ int main() {
     for (int i = 0; i < amount; i++) {
         char san[6];
         moveToSan(moves[i], san);
-        //printf("%s\n", san);
+        printf("%s\n", san);
     }
 
     return 0;
