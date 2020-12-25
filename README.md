@@ -7,7 +7,6 @@ Sophia was originally written in Python but was later rewritten in C to give her
 
 1. Copy board
 2. Legal move generation for all pieces
-2. En passant
-3. Promotion
-3. Castling moves
-4. Is game over (No legal moves)
+3. En passant
+4. Castling moves
+5. Is game over (No legal moves)
