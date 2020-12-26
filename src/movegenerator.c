@@ -4,6 +4,7 @@
 #include <string.h>
 #include "movegenerator.h"
 #include "utils.h"
+#include "board.h"
 
 #define bit(a) (1LL<<a)
 #define _3(a,b,c)           (1LL<<a)|(1LL<<b)|(1LL<<c)
@@ -363,9 +364,35 @@ bool isSquareAttacked(Board board, int square) {
     return false;
 }
 
-void addMove(Move move, Move moves[], int* indx) {
-    moves[*indx] = move;
-    *indx += 1;
+bool isMoveLegal(Board board, Move move) {
+    Board cpy = board;
+    pushMove(&cpy, move);
+
+    /*
+    printf("Move test: ");
+    printBoard(cpy);
+    */
+
+    // Black move
+    Bitboard kingMask = cpy.turn ? cpy.king_B : cpy.king_W;
+
+    int kingSquare;
+    for (int i = 0; i < 64;i++) {
+        if (getBit(kingMask, i)) {
+            kingSquare = i;
+            break;
+        }
+    }
+    cpy.turn ^= 1;
+
+    return ! isSquareAttacked(cpy, kingSquare);
+}
+
+void addMove(Board board, Move move, Move moves[], int* indx) {
+    if (isMoveLegal(board, move)) {
+        moves[*indx] = move;
+        *indx += 1;
+    }
 }
 
 Bitboard getKingMask(Board board, Bitboard occWhite, Bitboard occBlack, int* kingSquare) {
@@ -408,17 +435,20 @@ void pawnSingleAndDblPushes(Board board, Bitboard occ, Bitboard* singlePush, Bit
     *doublePush = dbl;
 }
 
-void addPawnAdvanceWithPossiblePromos(bool isPromoting, int turn, int from, int to, Move moves[], int* indx) {
+void addPawnAdvanceWithPossiblePromos(Board board, bool isPromoting, int turn, int from, int to, Move moves[], int* indx) {
     if (isPromoting) {
         for (int i = 0; i < 4; i++) {
             Move move = getMove(from, to, turn ? WHITE_PROMOTIONS[i] : BLACK_PROMOTIONS[i], NOT_CASTLE);
-            addMove(move, moves, indx);
+            addMove(board, move, moves, indx);
         }
     } else {
         Move move = getMove(from, to, NO_PROMOTION, NOT_CASTLE);
-        addMove(move, moves, indx);
+        addMove(board, move, moves, indx);
     }
 }
+
+
+
 
 int legalMoves(Board board, Move moves[]) {
 
@@ -455,32 +485,32 @@ int legalMoves(Board board, Move moves[]) {
             bool isPromoting = board.turn ? (fromSquare >= H7 && fromSquare <= A7) : (fromSquare >= H2 && fromSquare <= A2);
 
             // Pawn single push
-            addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, sq, moves, &length);
+            addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, sq, moves, &length);
 
             Bitboard epSquare = board.epSquare == -1 ? 0LL : 1LL << board.epSquare;
             if (board.turn) {
                 // Pawn east attack
                 if (PAWN_W_ATTACKS_EAST[fromSquare] & (occupancyBlack | epSquare)) {
                     int toSquare = fromSquare + 7;
-                    addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, toSquare, moves, &length);
+                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, toSquare, moves, &length);
                 }
                 
                 // Pawn west attack
                 if (PAWN_W_ATTACKS_WEST[fromSquare] & (occupancyBlack | epSquare)) {
                     int toSquare = fromSquare + 9;
-                    addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, toSquare, moves, &length);
+                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, toSquare, moves, &length);
                 }
             } else {
                 // Pawn east attack
                 if (PAWN_B_ATTACKS_EAST[fromSquare] & (occupancyWhite | epSquare)) {
                     int toSquare = fromSquare - 7;
-                    addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, toSquare, moves, &length);
+                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, toSquare, moves, &length);
                 }
                 
                 // Pawn west attack
                 if (PAWN_B_ATTACKS_WEST[fromSquare] & (occupancyWhite | epSquare)) {
                     int toSquare = fromSquare - 9;
-                    addPawnAdvanceWithPossiblePromos(isPromoting, board.turn, fromSquare, toSquare, moves, &length);
+                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, toSquare, moves, &length);
                 }
             }
         }
@@ -489,13 +519,14 @@ int legalMoves(Board board, Move moves[]) {
         if (getBit(doublePush, sq)) {
             int fromSquare = board.turn ? sq-8*2 : sq+8*2;
             Move move = getMove(fromSquare, sq, NO_PROMOTION, NOT_CASTLE);
-            addMove(move, moves, &length);
+            addMove(board, move, moves, &length);
         }
 
         // King
         if (getBit(kingMovesMask, sq)) {
             Move move = getMove(kingSquare, sq, NO_PROMOTION, NOT_CASTLE);
-            addMove(move, moves, &length);
+            isMoveLegal(board, move);
+            addMove(board, move, moves, &length);
         }
 
         // Bishop
@@ -506,7 +537,7 @@ int legalMoves(Board board, Move moves[]) {
             for (int i = 0; i < 64; i++) {
                 if (getBit(target, i)) {
                     Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
-                    addMove(move, moves, &length);
+                    addMove(board, move, moves, &length);
                 }
             }
         }
@@ -519,7 +550,7 @@ int legalMoves(Board board, Move moves[]) {
             for (int i = 0; i < 64; i++) {
                 if (getBit(target, i)) {
                     Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
-                    addMove(move, moves, &length);
+                    addMove(board, move, moves, &length);
                 }
             }
         }
@@ -537,7 +568,7 @@ int legalMoves(Board board, Move moves[]) {
             for (int i = 0; i < 64; i++) {
                 if (getBit(target, i)) {
                     Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
-                    addMove(move, moves, &length);
+                    addMove(board, move, moves, &length);
                 }
             }
         }
@@ -549,7 +580,7 @@ int legalMoves(Board board, Move moves[]) {
                 for (int i = 0; i < 64; i++) {
                     if (getBit(target, i)) {
                         Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
-                        addMove(move, moves, &length);
+                        addMove(board, move, moves, &length);
                     }
                 }
         }
@@ -565,7 +596,7 @@ int legalMoves(Board board, Move moves[]) {
 
             if (isNotInCheck && pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, K);
-                addMove(move, moves, &length);
+                addMove(board, move, moves, &length);
             }
         }
         if (board.castling & Q) {
@@ -576,7 +607,7 @@ int legalMoves(Board board, Move moves[]) {
 
             if (isNotInCheck && pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, Q);
-                addMove(move, moves, &length);
+                addMove(board, move, moves, &length);
             }
         }
     } else {
@@ -588,7 +619,7 @@ int legalMoves(Board board, Move moves[]) {
 
             if (isNotInCheck && pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, k);
-                addMove(move, moves, &length);
+                addMove(board, move, moves, &length);
             }
         }
         if (board.castling & q) {
@@ -599,7 +630,7 @@ int legalMoves(Board board, Move moves[]) {
 
             if (isNotInCheck && pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, q);
-                addMove(move, moves, &length);
+                addMove(board, move, moves, &length);
             }
         }
     }
