@@ -476,6 +476,8 @@ int legalMoves(Board board, Move moves[]) {
     Bitboard rookBitboard = board.turn ? board.rook_W : board.rook_B;
     Bitboard queenBitboard = board.turn ? board.queen_W : board.queen_B;
     Bitboard knightBitboard = board.turn ? board.knight_W : board.knight_B;
+    Bitboard pawnMask = board.turn ? board.pawn_W : board.pawn_B;
+    Bitboard epSquare = board.epSquare == -1 ? 0LL : 1LL << board.epSquare;
 
     // Iterate over squares
     for (int sq = 0; sq < 64; sq++) {
@@ -486,31 +488,33 @@ int legalMoves(Board board, Move moves[]) {
 
             // Pawn single push
             addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, sq, moves, &length);
+        }
 
-            Bitboard epSquare = board.epSquare == -1 ? 0LL : 1LL << board.epSquare;
+        if (getBit(pawnMask, sq)) {
+            bool isPromoting = board.turn ? (sq >= H7 && sq <= A7) : (sq >= H2 && sq <= A2);
             if (board.turn) {
                 // Pawn east attack
-                if (PAWN_W_ATTACKS_EAST[fromSquare] & (occupancyBlack | epSquare)) {
-                    int toSquare = fromSquare + 7;
-                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, toSquare, moves, &length);
+                if (PAWN_W_ATTACKS_EAST[sq] & (occupancyBlack | epSquare)) {
+                    int toSquare = sq + 7;
+                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
                 }
                 
                 // Pawn west attack
-                if (PAWN_W_ATTACKS_WEST[fromSquare] & (occupancyBlack | epSquare)) {
-                    int toSquare = fromSquare + 9;
-                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, toSquare, moves, &length);
+                if (PAWN_W_ATTACKS_WEST[sq] & (occupancyBlack | epSquare)) {
+                    int toSquare = sq + 9;
+                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
                 }
             } else {
                 // Pawn east attack
-                if (PAWN_B_ATTACKS_EAST[fromSquare] & (occupancyWhite | epSquare)) {
-                    int toSquare = fromSquare - 7;
-                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, toSquare, moves, &length);
+                if (PAWN_B_ATTACKS_EAST[sq] & (occupancyWhite | epSquare)) {
+                    int toSquare = sq - 7;
+                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
                 }
                 
                 // Pawn west attack
-                if (PAWN_B_ATTACKS_WEST[fromSquare] & (occupancyWhite | epSquare)) {
-                    int toSquare = fromSquare - 9;
-                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, toSquare, moves, &length);
+                if (PAWN_B_ATTACKS_WEST[sq] & (occupancyWhite | epSquare)) {
+                    int toSquare = sq - 9;
+                    addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
                 }
             }
         }

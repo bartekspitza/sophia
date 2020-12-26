@@ -34,16 +34,24 @@ void pushSan(Board* board, char* san) {
 void pushMove(Board* board, Move move) {
     // En passant
     if (move.toSquare == board->epSquare) {
-        if (board->turn) {
-            int capturedSquare = board->epSquare -8;
-            clearBit(&(board->pawn_B), capturedSquare);
-        } else {
-            int capturedSquare = board->epSquare + 8;
-            clearBit(&(board->pawn_W), capturedSquare);
+        Bitboard* friendlyPawns = board->turn ? &(board->pawn_W) : &(board->pawn_B);
+        Bitboard* opponentPawns = board->turn ? &(board->pawn_B) : &(board->pawn_W);
+        bool isPawnMove = *friendlyPawns & (1LL << move.fromSquare);
+
+        if (isPawnMove) {
+            int capturedSquare = board->epSquare + (board->turn ? -8 : 8);
+
+            // Capture the pawn
+            clearBit(opponentPawns, capturedSquare);
+
+            // Move the pawn that takes
+            clearBit(friendlyPawns, move.fromSquare);
+            setBit(friendlyPawns, board->epSquare);
+
+            board->epSquare = -1;
+            board->turn ^= 1;
+            return;
         }
-        board->epSquare = -1;
-        board->turn ^= 1;
-        return;
     } 
     
     // Castle
