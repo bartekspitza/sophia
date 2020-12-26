@@ -308,6 +308,59 @@ Bitboard getRookAttacks(int square, Bitboard occupancy) {
 	return ROOK_ATTACKS[square][occupancy];
 }
 
+
+bool isSquareAttacked(Board board, int square) {
+    Bitboard occ = 0;
+    for (int i = 0; i < 12; i++) occ |= *(&(board.pawn_W)+i);
+    Bitboard sqBb = 1LL << square;
+
+    for (int i = 0; i < 64; i++) {
+        // Pawn
+        Bitboard pawn = board.turn ? board.pawn_B : board.pawn_W;
+        if (getBit(pawn, i)) {
+            if (board.turn) {
+                if (PAWN_B_ATTACKS_EAST[i] & sqBb) return true;
+                if (PAWN_B_ATTACKS_WEST[i] & sqBb) return true;
+            } else {
+                if (PAWN_W_ATTACKS_EAST[i] & sqBb) return true;
+                if (PAWN_W_ATTACKS_WEST[i] & sqBb) return true;
+            }
+        }
+
+        // King
+        Bitboard king = board.turn ? board.king_B : board.king_W;
+        if (getBit(king, i)) {
+            if (KING_MOVEMENT[i] & sqBb) return true;
+        }
+        // Knight
+        Bitboard knight = board.turn ? board.knight_B : board.knight_W;
+        if (getBit(knight, i)) {
+            if (KNIGHT_MOVEMENT[i] & sqBb) return true;
+        }
+        // Bishop
+        Bitboard bishop = board.turn ? board.bishop_B : board.bishop_W;
+        if (getBit(bishop, i)) {
+            Bitboard attacks = getBishopAttacks(i, occ);
+            if (attacks & sqBb) return true;
+        }
+        // Rook
+        Bitboard rook = board.turn ? board.rook_B : board.rook_W;
+        if (getBit(rook, i)) {
+            Bitboard attacks = getRookAttacks(i, occ);
+            if (attacks & sqBb) return true;
+        }
+        // Queen
+        Bitboard queen = board.turn ? board.queen_B : board.queen_W;
+        if (getBit(queen, i)) {
+            Bitboard attacks = getBishopAttacks(i, occ);
+            attacks |= getRookAttacks(i, occ);
+            if (attacks & sqBb) return true;
+        }
+    }
+
+    return false;
+}
+
 void addMove(Move move, Move moves[], int* indx) {
     moves[*indx] = move;
     *indx += 1;
