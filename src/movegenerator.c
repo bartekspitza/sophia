@@ -576,7 +576,6 @@ int legalMoves(Board board, Move moves[]) {
         // Knight
         if (getBit(knightBitboard, sq)) {
             Bitboard target = KNIGHT_MOVEMENT[sq] ^ (KNIGHT_MOVEMENT[sq] & friendlyOccupancy);
-
                 for (int i = 0; i < 64; i++) {
                     if (getBit(target, i)) {
                         Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
