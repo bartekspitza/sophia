@@ -31,6 +31,7 @@ typedef struct {
     int fromSquare;
     int toSquare;
     int promotion;
+    int castle;
 } Move;
 
 enum PIECES {
@@ -48,6 +49,8 @@ enum SQUARES {
     H7, G7, F7, E7, D7, C7, B7, A7,
     H8, G8, F8, E8, D8, C8, B8, A8
 };
+
+enum CASTLING {K=1, Q=2, k=4, q=8};
 
 enum FILES {H, G, F, E, D, C, B, A};
 

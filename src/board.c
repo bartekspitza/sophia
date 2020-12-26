@@ -24,12 +24,12 @@ Bitboard* pieceBitboard(Board* board, int pieceType) {
 
 void pushSan(Board* board, char* san) {
     Move move;
-    sanToMove(&move, san);
+    sanToMove(*board, &move, san);
     pushMove(board, move);
 }
 
 void pushMove(Board* board, Move move) {
-    // En passant capture
+    // En passant
     if (move.toSquare == board->epSquare) {
         if (board->turn) {
             int capturedSquare = board->epSquare -8;
@@ -38,6 +38,33 @@ void pushMove(Board* board, Move move) {
             int capturedSquare = board->epSquare + 8;
             clearBit(&(board->pawn_W), capturedSquare);
         }
+        board->epSquare = -1;
+        board->turn ^= 1;
+        return;
+    } 
+    
+    // Castle
+    if (move.castle) {
+        if (move.castle == K) {
+            board->king_W = board->king_W >> 2;
+            clearBit(&(board->rook_W), H1);
+            setBit(&(board->rook_W), F1);
+        } else if (move.castle == Q) {
+            board->king_W = board->king_W << 2;
+            clearBit(&(board->rook_W), A1);
+            setBit(&(board->rook_W), D1);
+        } else if (move.castle == k) {
+            board->king_B = board->king_B >> 2;
+            clearBit(&(board->rook_B), H8);
+            setBit(&(board->rook_B), F8);
+        } else if (move.castle == q) {
+            board->king_B = board->king_B << 2;
+            clearBit(&(board->rook_B), A8);
+            setBit(&(board->rook_B), D8);
+        }
+        board->epSquare = -1;
+        board->turn ^= 1;
+        return;
     }
 
     // Ep square

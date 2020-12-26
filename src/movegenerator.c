@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include "movegenerator.h"
 #include "utils.h"
 
@@ -14,7 +15,7 @@
 #define pop_bit(bitboard, square) (get_bit(bitboard, square) ? (bitboard ^= (1ULL << square)) : 0)
 #define get_bit(bitboard, square) (bitboard & (1ULL << square))
 #define set_bit(bitboard, square) (bitboard |= (1ULL << square))
-#define getMove(from, to, promo) {.fromSquare=from, .toSquare=to, .promotion=promo}
+#define getMove(from, to, promo, castling) {.fromSquare=from, .toSquare=to, .promotion=promo, .castle=castling}
 
 
 Bitboard PAWN_START_WHITE = 0xFF00;
@@ -107,6 +108,7 @@ Bitboard ROOK_ATTACKS[64][4096];
 int WHITE_PROMOTIONS[4] = {QUEEN_W, BISHOP_W, KNIGHT_W, ROOK_W};
 int BLACK_PROMOTIONS[4] = {QUEEN_B, BISHOP_B, KNIGHT_B, ROOK_B};
 int NO_PROMOTION = -1;
+int NOT_CASTLE = 0;
 
 int countBits(Bitboard bitboard) {
   int count = 0;
@@ -409,11 +411,11 @@ void pawnSingleAndDblPushes(Board board, Bitboard occ, Bitboard* singlePush, Bit
 void addPawnAdvanceWithPossiblePromos(bool isPromoting, int turn, int from, int to, Move moves[], int* indx) {
     if (isPromoting) {
         for (int i = 0; i < 4; i++) {
-            Move move = getMove(from, to, turn ? WHITE_PROMOTIONS[i] : BLACK_PROMOTIONS[i]);
+            Move move = getMove(from, to, turn ? WHITE_PROMOTIONS[i] : BLACK_PROMOTIONS[i], NOT_CASTLE);
             addMove(move, moves, indx);
         }
     } else {
-        Move move = getMove(from, to, NO_PROMOTION);
+        Move move = getMove(from, to, NO_PROMOTION, NOT_CASTLE);
         addMove(move, moves, indx);
     }
 }
@@ -486,13 +488,13 @@ int legalMoves(Board board, Move moves[]) {
         // Pawn double pushes
         if (getBit(doublePush, sq)) {
             int fromSquare = board.turn ? sq-8*2 : sq+8*2;
-            Move move = getMove(fromSquare, sq, NO_PROMOTION);
+            Move move = getMove(fromSquare, sq, NO_PROMOTION, NOT_CASTLE);
             addMove(move, moves, &length);
         }
 
         // King
         if (getBit(kingMovesMask, sq)) {
-            Move move = getMove(kingSquare, sq, NO_PROMOTION);
+            Move move = getMove(kingSquare, sq, NO_PROMOTION, NOT_CASTLE);
             addMove(move, moves, &length);
         }
 
@@ -503,7 +505,7 @@ int legalMoves(Board board, Move moves[]) {
 
             for (int i = 0; i < 64; i++) {
                 if (getBit(target, i)) {
-                    Move move = getMove(sq, i, NO_PROMOTION);
+                    Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
                     addMove(move, moves, &length);
                 }
             }
@@ -516,7 +518,7 @@ int legalMoves(Board board, Move moves[]) {
 
             for (int i = 0; i < 64; i++) {
                 if (getBit(target, i)) {
-                    Move move = getMove(sq, i, NO_PROMOTION);
+                    Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
                     addMove(move, moves, &length);
                 }
             }
@@ -534,7 +536,7 @@ int legalMoves(Board board, Move moves[]) {
 
             for (int i = 0; i < 64; i++) {
                 if (getBit(target, i)) {
-                    Move move = getMove(sq, i, NO_PROMOTION);
+                    Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
                     addMove(move, moves, &length);
                 }
             }
@@ -546,55 +548,132 @@ int legalMoves(Board board, Move moves[]) {
 
                 for (int i = 0; i < 64; i++) {
                     if (getBit(target, i)) {
-                        Move move = getMove(sq, i, NO_PROMOTION);
+                        Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
                         addMove(move, moves, &length);
                     }
                 }
         }
     }
 
+    // Castling
+    if (board.turn) {
+        if (board.castling & K) {
+            bool isNotInCheck = ! isSquareAttacked(board, E1);
+            bool pathClear = getBit(occupancy, F1) == 0 && getBit(occupancy, G1) == 0;
+            bool noAttacks = ! isSquareAttacked(board, F1);
+            pathClear = pathClear && noAttacks;
+
+            if (isNotInCheck && pathClear) {
+                Move move = getMove(0, 0, NO_PROMOTION, K);
+                addMove(move, moves, &length);
+            }
+        }
+        if (board.castling & Q) {
+            bool isNotInCheck = ! isSquareAttacked(board, E1);
+            bool pathClear = getBit(occupancy, B1) == 0 && getBit(occupancy, C1) == 0 && getBit(occupancy, D1) == 0;
+            bool noAttacks = ! isSquareAttacked(board, D1);
+            pathClear = pathClear && noAttacks;
+
+            if (isNotInCheck && pathClear) {
+                Move move = getMove(0, 0, NO_PROMOTION, Q);
+                addMove(move, moves, &length);
+            }
+        }
+    } else {
+        if (board.castling & k) {
+            bool isNotInCheck = ! isSquareAttacked(board, E8);
+            bool pathClear = getBit(occupancy, F8) == 0 && getBit(occupancy, G8) == 0;
+            bool noAttacks = ! isSquareAttacked(board, F8);
+            pathClear = pathClear && noAttacks;
+
+            if (isNotInCheck && pathClear) {
+                Move move = getMove(0, 0, NO_PROMOTION, k);
+                addMove(move, moves, &length);
+            }
+        }
+        if (board.castling & q) {
+            bool isNotInCheck = ! isSquareAttacked(board, E8);
+            bool pathClear = getBit(occupancy, B8) == 0 && getBit(occupancy, C8) == 0 && getBit(occupancy, D8) == 0;
+            bool noAttacks = ! isSquareAttacked(board, D8);
+            pathClear = pathClear && noAttacks;
+
+            if (isNotInCheck && pathClear) {
+                Move move = getMove(0, 0, NO_PROMOTION, q);
+                addMove(move, moves, &length);
+            }
+        }
+    }
+
     return length;
 }
 
-void sanToMove(Move* move, char* san) {
-    int fromFile = 'h' - san[0];
-    int fromRank = atoi(&san[1]) - 1;
-    int toFile = 'h' - san[2];
-    int toRank = atoi(&san[3]) - 1;
-    move->fromSquare = 8 * (fromRank) + fromFile;
-    move->toSquare = 8 * (toRank) + toFile;
+
+void printMoves(Move moves[], int length) {
+    printf("Moves: %d\n", length);
+    for(int i = 0;i<length;i++) {
+        char san[6];
+        moveToSan(moves[i], san);
+        printf("%s\n", san);
+        memset(san, 0, sizeof(san));
+    }
+}
+
+void sanToMove(Board board, Move* move, char* san) {
+    if (san[0] == 'O' && san[3] != '-') {
+        if (board.turn) move->castle = K;
+        else            move->castle = k;
+    } else if (san[4] == 'O') {
+        if (board.turn) move->castle = Q;
+        else            move->castle = q;
+    } else {
+
+        int fromFile = 'h' - san[0];
+        int fromRank = atoi(&san[1]) - 1;
+        int toFile = 'h' - san[2];
+        int toRank = atoi(&san[3]) - 1;
+        move->fromSquare = 8 * (fromRank) + fromFile;
+        move->toSquare = 8 * (toRank) + toFile;
+    }
 }
 
 void moveToSan(Move move, char san[]) {
-    san[0] = SQUARE_NAMES[move.fromSquare][0];
-    san[1] = SQUARE_NAMES[move.fromSquare][1];
-    san[2] = SQUARE_NAMES[move.toSquare][0];
-    san[3] = SQUARE_NAMES[move.toSquare][1];
+    if (move.castle) {
+        if (move.castle == K || move.castle == k) {
+            san = strcpy(san, "O-O");
+        } else {
+            san = strcpy(san, "O-O-O");
+        }
+    } else {
+        san[0] = SQUARE_NAMES[move.fromSquare][0];
+        san[1] = SQUARE_NAMES[move.fromSquare][1];
+        san[2] = SQUARE_NAMES[move.toSquare][0];
+        san[3] = SQUARE_NAMES[move.toSquare][1];
 
-    switch (move.promotion) {
-        case QUEEN_W:
-            san[4] = 'Q';
-            break;
-        case QUEEN_B:
-            san[4] = 'q';
-            break;
-        case ROOK_W:
-            san[4] = 'R';
-            break;
-        case ROOK_B:
-            san[4] = 'r';
-            break;
-        case BISHOP_W:
-            san[4] = 'B';
-            break;
-        case BISHOP_B:
-            san[4] = 'b';
-            break;
-        case KNIGHT_W:
-            san[4] = 'N';
-            break;
-        case KNIGHT_B:
-            san[4] = 'n';
-            break;
+        switch (move.promotion) {
+            case QUEEN_W:
+                san[4] = 'Q';
+                break;
+            case QUEEN_B:
+                san[4] = 'q';
+                break;
+            case ROOK_W:
+                san[4] = 'R';
+                break;
+            case ROOK_B:
+                san[4] = 'r';
+                break;
+            case BISHOP_W:
+                san[4] = 'B';
+                break;
+            case BISHOP_B:
+                san[4] = 'b';
+                break;
+            case KNIGHT_W:
+                san[4] = 'N';
+                break;
+            case KNIGHT_B:
+                san[4] = 'n';
+                break;
+        }
     }
 }
