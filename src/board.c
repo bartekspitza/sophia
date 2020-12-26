@@ -18,6 +18,9 @@ char SQUARE_NAMES[64][3] = {
 
 char CASTLING_RIGHTS[4][2] = { "K", "Q", "k", "q" };
 
+int ALL_CASTLE_W = 0b0011;
+int ALL_CASTLE_B = 0b1100;
+
 Bitboard* pieceBitboard(Board* board, int pieceType) {
     return (Bitboard*) board + pieceType;
 }
@@ -62,29 +65,48 @@ void pushMove(Board* board, Move move) {
             clearBit(&(board->rook_B), A8);
             setBit(&(board->rook_B), D8);
         }
+
+        // Update castling rights
+        board->castling &= board->turn ? ALL_CASTLE_B : ALL_CASTLE_W;
+
         board->epSquare = -1;
         board->turn ^= 1;
         return;
     }
 
-    // Ep square
+    // Set potential ep-square
     board->epSquare = -1;
-
     Bitboard from = 1LL << move.fromSquare;
     bool starterPawnMoved = from & (board->turn ? PAWN_START_WHITE : PAWN_START_BLACK);
     int distanceCovered = abs(move.fromSquare - move.toSquare);
     int twoRanks = 16;
-
     if (starterPawnMoved && distanceCovered == twoRanks) {
         board->epSquare = board->turn ? move.fromSquare + 8 : move.fromSquare - 8;
     }
 
     // Make move
-    Bitboard* bb = board->turn ? &(board->pawn_W) : &(board->pawn_B);
-    for (int i = 0; i < 6; i++) {
+    Bitboard* bb = &(board->pawn_W);
+    Bitboard kingMask = board->turn ? board->king_W : board->king_B;
+    Bitboard rookMask = board->turn ? board->rook_W : board->rook_B;
+
+    for (int i = 0; i < 12; i++) {
+        // Find piece on fromSquare
         if (getBit(*bb, move.fromSquare)) {
+            // Remove castling rights
+            if (*bb == kingMask) {
+                board->castling &= board->turn ? ALL_CASTLE_B : ALL_CASTLE_W;
+            } else if (*bb == rookMask) {
+                if (board->turn && move.fromSquare == A1) board->castling &= 0b1101;
+                if (board->turn && move.fromSquare == H1) board->castling &= 0b1110;
+                if (!board->turn && move.fromSquare == A8) board->castling &= 0b0111;
+                if (!board->turn && move.fromSquare == H8) board->castling &= 0b1011;
+            }
+
+            // Move the piece
             clearBit(bb, move.fromSquare);
             setBit(bb, move.toSquare);
+
+        // Remove piece on toSquare
         } else if (getBit(*bb, move.toSquare)) {
             clearBit(bb, move.toSquare);
         }

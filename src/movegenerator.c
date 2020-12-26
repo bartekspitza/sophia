@@ -633,6 +633,7 @@ void sanToMove(Board board, Move* move, char* san) {
         int toRank = atoi(&san[3]) - 1;
         move->fromSquare = 8 * (fromRank) + fromFile;
         move->toSquare = 8 * (toRank) + toFile;
+        move->castle = 0;
     }
 }
 
