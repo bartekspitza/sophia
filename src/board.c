@@ -85,7 +85,7 @@ void pushMove(Board* board, Move move) {
     // Set potential ep-square
     board->epSquare = -1;
     Bitboard from = 1LL << move.fromSquare;
-    bool starterPawnMoved = from & (board->turn ? PAWN_START_WHITE : PAWN_START_BLACK);
+    bool starterPawnMoved = from & (board->turn ? board->pawn_W : board->pawn_B);
     int distanceCovered = abs(move.fromSquare - move.toSquare);
     int twoRanks = 16;
     if (starterPawnMoved && distanceCovered == twoRanks) {
@@ -112,11 +112,12 @@ void pushMove(Board* board, Move move) {
                 if (!board->turn && move.fromSquare == H8) board->castling &= 0b1011;
             }
 
-            // Move the piece
+            // "Lift up the piece"
             clearBit(bb, move.fromSquare);
-            setBit(bb, move.toSquare);
 
-        // Remove piece on toSquare
+            if (move.promotion <= 0) {
+                setBit(bb, move.toSquare);
+            }
         } else if (getBit(*bb, move.toSquare)) {
 
             // Update castling rights if rooks are captured
@@ -127,9 +128,16 @@ void pushMove(Board* board, Move move) {
                 if (!board->turn && move.toSquare == H1) board->castling &= 0b1110;
             }
 
+            // Remove captured piece
             clearBit(bb, move.toSquare);
         }
         ++bb;
+    }
+
+    // Handle promotion
+    if (move.promotion > 0) {
+        Bitboard* targetMask = &(board->pawn_W) + move.promotion;
+        setBit(targetMask, move.toSquare);
     }
 
     // Toggle turn
