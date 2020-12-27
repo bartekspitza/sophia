@@ -647,11 +647,11 @@ void sanToMove(Board board, Move* move, char* san) {
 
 void moveToSan(Move move, char san[]) {
     if (move.castle) {
-        if (move.castle == K || move.castle == k) {
-            san = strcpy(san, "O-O");
-        } else {
-            san = strcpy(san, "O-O-O");
-        }
+        if (move.castle == K) { san = strcpy(san, "e1g1"); }
+        else if (move.castle == k) { san = strcpy(san, "e8g8"); }
+        else if (move.castle == Q) { san = strcpy(san, "e1c1"); }
+        else if (move.castle == q) { san = strcpy(san, "e8c8"); }
+
     } else {
         san[0] = SQUARE_NAMES[move.fromSquare][0];
         san[1] = SQUARE_NAMES[move.fromSquare][1];
