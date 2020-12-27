@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 #include "board.h"
 
 typedef unsigned long long u64;
@@ -30,21 +31,21 @@ u64 EXPECTED_RESULTS[][6] = {
   {17, 182 , 3232 , 42552  , 802123   , 11608216   },
 };
 
-
 int main() {
     initMoveGenerationTables();
 
-    int depth = 5;
+    int depth = 4;
     printf("Depth %d\n\n", depth);
 
 
+    clock_t start = clock();
     for (int i = 0; i < NUM_FENS;i++) {
       char* fen = FENS[i];
 
       Board board;
       setFen(&board, fen);
 
-      u64 nodes = perft(board, depth, true);
+      u64 nodes = perft(board, depth, false);
       u64 expected = EXPECTED_RESULTS[i][depth-1];
       bool matches = nodes == expected;
 
@@ -54,6 +55,11 @@ int main() {
 
       printf("%llu/%llu %s\n", nodes, expected, fen);
     }
+
+    // Print elapsed time
+    clock_t end = clock();
+    double time_spent = (double) (end - start) / CLOCKS_PER_SEC;
+    printf("\nDone in: %.2fs\n", time_spent);
 
     return 0;
 }
@@ -72,8 +78,6 @@ u64 perft(Board board, int depth, bool divide) {
     Board cpy = board;
     pushMove(&cpy, moves[i]);
 
-    //nodes += perft(cpy, depth-1, false);
-
     u64 count = perft(cpy, depth-1, false);
     if (divide) {
       char san[6];
@@ -82,7 +86,6 @@ u64 perft(Board board, int depth, bool divide) {
       printf("%s: %llu\n", san, count);
     }
     nodes += count;
-
   }
 
   return nodes;
