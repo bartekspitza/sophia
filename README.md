@@ -1,3 +1,3 @@
-# Sophia Chess Engine
+## Overview
 
-Sophia is a chess engine written in C. She uses a bitboard representation and utilizes magic bitboards for blazing fast move generation.
+Sophia is a chess engine written in C. With time she will support the UCI protocol and be able to connect to a UCI-compatible graphical user interface (GUI) (e.g. Xboard, PolyGlot etc). For now, the goal is to create a chess engine capable of competing with top human players.
