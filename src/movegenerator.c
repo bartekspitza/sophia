@@ -207,21 +207,20 @@ void initKingMovementTable(void) {
 }
 
 void initKnightMovementTable(void) {
-    for (int i = 0; i < 64; i++) {
-        Bitboard sqBb = 1LL << (63-i);
+    for (int sq = 0; sq < 64; sq++) {
         Bitboard bb = 0LL;
-        int file = i%8;
+        int file = sq%8;
 
-        if (file != H && i < H7) { bb |= sqBb >> 15;} // UP RIGHT
-        if (file != A && i < H7) { bb |= sqBb >> 17;} // UP LEFT
-        if (file != H && i > A2) { bb |= sqBb << 17;} // DOWN RIGHT
-        if (file != A && i > A2) { bb |= sqBb << 15;} // DOWN RIGHT
-        if (file < B && i < A7) { bb |= sqBb >> 10;} // LEFT UP
-        if (file < B && i > H2) { bb |= sqBb << 6;} // LEFT DOWN
-        if (file > G && i < H8) { bb |= sqBb >> 6;} // RIGHT UP
-        if (file > G && i > A1) { bb |= sqBb << 10;} // RIGHT DOWN
+        if (file != A && sq <= A6) { bb |= 1LL << sq+17;} // UP LEFT
+        if (file != H && sq <= A6) { bb |= 1LL << sq+15;} // UP RIGHT
+        if (file != A && sq >= A2) { bb |= 1LL << sq-15;} // DOWN LEFT
+        if (file != H && sq > H3) { bb |= 1LL << sq-17;} // DOWN RIGHT
+        if (file < B && sq <= A7) { bb |= 1LL << sq+10;} // LEFT UP
+        if (file < B && sq >= H2) { bb |= 1LL << sq-6;} // LEFT DOWN
+        if (file > G && sq >= H2) { bb |= 1LL << sq-10;} // RIGHT DOWN
+        if (file > G && sq <= A7) { bb |= 1LL << sq+6;} // RIGHT UP
 
-        KNIGHT_MOVEMENT[63-i] = bb;
+        KNIGHT_MOVEMENT[sq] = bb;
     }
 }
 
