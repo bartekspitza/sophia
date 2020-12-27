@@ -95,15 +95,17 @@ void pushMove(Board* board, Move move) {
     // Make move
     Bitboard* bb = &(board->pawn_W);
     Bitboard kingMask = board->turn ? board->king_W : board->king_B;
-    Bitboard rookMask = board->turn ? board->rook_W : board->rook_B;
+    Bitboard friendlyRooks = board->turn ? board->rook_W : board->rook_B;
+    Bitboard opponentRooks = board->turn ? board->rook_B : board->rook_W;
 
     for (int i = 0; i < 12; i++) {
         // Find piece on fromSquare
         if (getBit(*bb, move.fromSquare)) {
-            // Remove castling rights
+
+            // Update castling rights
             if (*bb == kingMask) {
                 board->castling &= board->turn ? ALL_CASTLE_B : ALL_CASTLE_W;
-            } else if (*bb == rookMask) {
+            } else if (*bb == friendlyRooks) {
                 if (board->turn && move.fromSquare == A1) board->castling &= 0b1101;
                 if (board->turn && move.fromSquare == H1) board->castling &= 0b1110;
                 if (!board->turn && move.fromSquare == A8) board->castling &= 0b0111;
@@ -116,6 +118,15 @@ void pushMove(Board* board, Move move) {
 
         // Remove piece on toSquare
         } else if (getBit(*bb, move.toSquare)) {
+
+            // Update castling rights if rooks are captured
+            if (*bb == opponentRooks) {
+                if (board->turn && move.toSquare == H8) board->castling &= 0b1011;
+                if (board->turn && move.toSquare == A8) board->castling &= 0b0111;
+                if (!board->turn && move.toSquare == A1) board->castling &= 0b1101;
+                if (!board->turn && move.toSquare == H1) board->castling &= 0b1110;
+            }
+
             clearBit(bb, move.toSquare);
         }
         ++bb;
