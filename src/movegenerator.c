@@ -641,6 +641,20 @@ void sanToMove(Board board, Move* move, char* san) {
         move->fromSquare = 8 * (fromRank) + fromFile;
         move->toSquare = 8 * (toRank) + toFile;
         move->castle = 0;
+        move->promotion = -1;
+
+        if (san[4] == 'q') {
+            move->promotion = board.turn ? QUEEN_W : QUEEN_B;
+        }
+        else if (san[4] == 'r') {
+            move->promotion = board.turn ? ROOK_W : ROOK_B;
+        }
+        else if (san[4] == 'n') {
+            move->promotion = board.turn ? KNIGHT_W : KNIGHT_B;
+        }
+        else if (san[4] == 'b') {
+            move->promotion = board.turn ? BISHOP_W : BISHOP_B;
+        }
     }
 }
 
