@@ -32,9 +32,9 @@ u64 EXPECTED_RESULTS[][6] = {
 };
 
 int main() {
-    initMoveGenerationTables();
+    initMoveGeneration();
 
-    int depth = 4;
+    int depth = 5;
     printf("Depth %d\n\n", depth);
 
 
@@ -45,7 +45,7 @@ int main() {
       Board board;
       setFen(&board, fen);
 
-      u64 nodes = perft(board, depth, false);
+      u64 nodes = perft(board, depth, true);
       u64 expected = EXPECTED_RESULTS[i][depth-1];
       bool matches = nodes == expected;
 

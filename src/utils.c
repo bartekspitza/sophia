@@ -1,27 +1,15 @@
 #include <stdio.h>
 #include "utils.h"
 
-void setBit(Bitboard* bb, int bit) {
-    *bb |= (1LL << bit);
-}
-void clearBit(Bitboard* bb, int bit) {
-    *bb &= ~(1LL << bit);
-}
-
-int getBit(Bitboard bb, int bit) {
-    Bitboard val = bb & (1LL << bit);
-    val = val >> bit;
-    return (int) val;
-}
-
 void printBitboard(Bitboard bb) {
     printf("\n");
     for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
 
             int loc = 63 - ((y*8) + x);
+            int bit = bb & (1ULL << loc);
 
-            if (getBit(bb, loc)) {
+            if (bit) {
                 putchar('x');
             } else {
                 putchar('.');
@@ -35,13 +23,9 @@ void printBitboard(Bitboard bb) {
 }
 
 void printBits(Bitboard bb) {
-    for (int i = 63; i >= 0; i--) {
-        int bit = getBit(bb, i);
-        if (bit == 0) {
-            printf("0");
-        } else if (bit == 1) {
-            printf("1");
-        }
+    for (int i = 0; i < 64; i++) {
+        int bit = bb & (1ULL << (63 - i));
+        printf(bit ? "1" : "0");
     }
     printf("\n");
 }

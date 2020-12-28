@@ -6,10 +6,6 @@
 #include "utils.h"
 #include "board.h"
 
-#define bit(a) (1LL<<a)
-#define pop_bit(bitboard, square) (get_bit(bitboard, square) ? (bitboard ^= (1ULL << square)) : 0)
-#define get_bit(bitboard, square) (bitboard & (1ULL << square))
-#define set_bit(bitboard, square) (bitboard |= (1ULL << square))
 #define getMove(from, to, promo, castling) {.fromSquare=from, .toSquare=to, .promotion=promo, .castle=castling}
 
 Bitboard PAWN_START_WHITE = 0xFF00;
@@ -51,6 +47,77 @@ int BISHOP_RELEVANT_BITS[64] = {
     6, 5, 5, 5, 5, 5, 5, 6
 };
 
+
+/*---------------------------------------------
+                                             
+ Initializes piece movement tables
+
+---------------------------------------------*/
+
+void initKingMovementTable(void) {
+    for (int sq = 0; sq < 64; sq++) {
+        Bitboard moves = 0;
+        int file = sq%8;
+
+        if (sq <= A7) moves |= 1LL << (sq+8); // UP
+        if (sq >= H2) moves |= 1LL << (sq-8); // DOWN
+        if (file < A) moves |= 1LL << (sq+1); // LEFT
+        if (file > H) moves |= 1LL << (sq-1); // RIGHT
+        if (file < A && sq <= A7) moves |= 1LL << (sq+9); // UP LEFT
+        if (file > H && sq <= A7) moves |= 1LL << (sq+7); // UP RIGHT
+        if (file < A && sq >= H2) moves |= 1LL << (sq-7); // DOWN LEFT
+        if (file > H && sq >= H2) moves |= 1LL << (sq-9); // DOWN RIGHT
+
+        KING_MOVEMENT[sq] = moves;
+    }
+}
+
+void initKnightMovementTable(void) {
+    for (int sq = 0; sq < 64; sq++) {
+        Bitboard bb = 0LL;
+        int file = sq%8;
+
+        if (file != A && sq <= A6) { bb |= 1LL << sq+17;} // UP LEFT
+        if (file != H && sq <= A6) { bb |= 1LL << sq+15;} // UP RIGHT
+        if (file != A && sq >= A2) { bb |= 1LL << sq-15;} // DOWN LEFT
+        if (file != H && sq > H3) { bb |= 1LL << sq-17;} // DOWN RIGHT
+        if (file < B && sq <= A7) { bb |= 1LL << sq+10;} // LEFT UP
+        if (file < B && sq >= H2) { bb |= 1LL << sq-6;} // LEFT DOWN
+        if (file > G && sq >= H2) { bb |= 1LL << sq-10;} // RIGHT DOWN
+        if (file > G && sq <= A7) { bb |= 1LL << sq+6;} // RIGHT UP
+
+        KNIGHT_MOVEMENT[sq] = bb;
+    }
+}
+
+void initPawnAttackTables(void) {
+    for (int sq = 0; sq < 64;sq++) {
+        int file = sq%8;
+
+        Bitboard attack = 0;
+        if (file != A && sq <= H8) attack |= 1LL << (sq+9); // White west
+        PAWN_W_ATTACKS_WEST[sq] = attack;
+
+        attack = 0;
+        if (file != H && sq <= H8) attack |= 1LL << (sq+7); // White east
+        PAWN_W_ATTACKS_EAST[sq] = attack;
+
+        attack = 0;
+        if (file != H && sq >= H2) attack |= 1LL << (sq-9); // Black west
+        PAWN_B_ATTACKS_WEST[sq] = attack;
+
+        attack = 0;
+        if (file != A && sq >= H2) attack |= 1LL << (sq-7); // Black east
+        PAWN_B_ATTACKS_EAST[sq] = attack;
+    }
+}
+
+/*---------------------------------------------
+                                             
+Magic bitboard methods
+
+---------------------------------------------*/
+
 int countBits(Bitboard bitboard) {
   int count = 0;
   
@@ -62,22 +129,19 @@ int countBits(Bitboard bitboard) {
   return count;
 }
 
-int getLs1bIndex(Bitboard bitboard) {
-
+int indexOfLastSetBit(Bitboard bitboard) {
     if (bitboard != 0)
-        // Convert trailing zeros before LS1B to ones and count them
         return countBits((bitboard & -bitboard) - 1);
     
     return -1;
 }
 
-Bitboard genOccupancyMask(int index, int bits_in_mask, Bitboard attack_mask) {
+Bitboard occupancyMask(int index, int bits, Bitboard attackMask) {
     Bitboard occupancy = 0ULL;
     
-    // loop over the range of bits within attack mask
-    for (int i = 0; i < bits_in_mask; i++) {
-        int square = getLs1bIndex(attack_mask);
-        pop_bit(attack_mask, square);
+    for (int i = 0; i < bits; i++) {
+        int square = indexOfLastSetBit(attackMask);
+        toggleBit(attackMask, square);
         
         if (index & (1 << i)) {
             occupancy |= (1ULL << square);
@@ -85,43 +149,6 @@ Bitboard genOccupancyMask(int index, int bits_in_mask, Bitboard attack_mask) {
     }
     
     return occupancy;
-}
-
-Bitboard genBishopMovement(int square) {
-    Bitboard movement = 0ULL;
-    
-    // File and rank
-    int f, r;
-    
-    // Target file and rank
-    int tf = square % 8;
-    int tr = square / 8;
-    
-    for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++) movement |= (1ULL << (r * 8 + f));
-    for (r = tr + 1, f = tf - 1; r <= 6 && f >= 1; r++, f--) movement |= (1ULL << (r * 8 + f));
-    for (r = tr - 1, f = tf + 1; r >= 1 && f <= 6; r--, f++) movement |= (1ULL << (r * 8 + f));
-    for (r = tr - 1, f = tf - 1; r >= 1 && f >= 1; r--, f--) movement |= (1ULL << (r * 8 + f));
-    
-    return movement;
-}
-
-Bitboard genRookMovement(int square) {
-    Bitboard movement = 0ULL;
-    
-    // File and rank
-    int f, r;
-    
-    // Target file and rank
-    int tf = square % 8;
-    int tr = square / 8;
-    
-    // generate attacks
-    for (r = tr + 1; r <= 6; r++) movement |= (1ULL << (r * 8 + tf));
-    for (r = tr - 1; r >= 1; r--) movement |= (1ULL << (r * 8 + tf));
-    for (f = tf + 1; f <= 6; f++) movement |= (1ULL << (tr * 8 + f));
-    for (f = tf - 1; f >= 1; f--) movement |= (1ULL << (tr * 8 + f));
-    
-    return movement;
 }
 
 Bitboard bishopAttacksOnTheFly(int square, Bitboard block) {
@@ -188,70 +215,46 @@ Bitboard rookAttacksOnTheFly(int square, Bitboard block) {
     return attacks;
 }
 
-void initKingMovementTable(void) {
-    for (int sq = 0; sq < 64; sq++) {
-        Bitboard moves = 0;
-        int file = sq%8;
-
-        if (sq <= A7) moves |= 1LL << (sq+8); // UP
-        if (sq >= H2) moves |= 1LL << (sq-8); // DOWN
-        if (file < A) moves |= 1LL << (sq+1); // LEFT
-        if (file > H) moves |= 1LL << (sq-1); // RIGHT
-        if (file < A && sq <= A7) moves |= 1LL << (sq+9); // UP LEFT
-        if (file > H && sq <= A7) moves |= 1LL << (sq+7); // UP RIGHT
-        if (file < A && sq >= H2) moves |= 1LL << (sq-7); // DOWN LEFT
-        if (file > H && sq >= H2) moves |= 1LL << (sq-9); // DOWN RIGHT
-
-        KING_MOVEMENT[sq] = moves;
-    }
+Bitboard bishopMovement(int square) {
+    // File and rank
+    int f, r;
+    
+    // Target file and rank
+    int tf = square % 8;
+    int tr = square / 8;
+    
+    Bitboard movement = 0ULL;
+    for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++) movement |= (1ULL << (r * 8 + f));
+    for (r = tr + 1, f = tf - 1; r <= 6 && f >= 1; r++, f--) movement |= (1ULL << (r * 8 + f));
+    for (r = tr - 1, f = tf + 1; r >= 1 && f <= 6; r--, f++) movement |= (1ULL << (r * 8 + f));
+    for (r = tr - 1, f = tf - 1; r >= 1 && f >= 1; r--, f--) movement |= (1ULL << (r * 8 + f));
+    
+    return movement;
 }
 
-void initKnightMovementTable(void) {
-    for (int sq = 0; sq < 64; sq++) {
-        Bitboard bb = 0LL;
-        int file = sq%8;
-
-        if (file != A && sq <= A6) { bb |= 1LL << sq+17;} // UP LEFT
-        if (file != H && sq <= A6) { bb |= 1LL << sq+15;} // UP RIGHT
-        if (file != A && sq >= A2) { bb |= 1LL << sq-15;} // DOWN LEFT
-        if (file != H && sq > H3) { bb |= 1LL << sq-17;} // DOWN RIGHT
-        if (file < B && sq <= A7) { bb |= 1LL << sq+10;} // LEFT UP
-        if (file < B && sq >= H2) { bb |= 1LL << sq-6;} // LEFT DOWN
-        if (file > G && sq >= H2) { bb |= 1LL << sq-10;} // RIGHT DOWN
-        if (file > G && sq <= A7) { bb |= 1LL << sq+6;} // RIGHT UP
-
-        KNIGHT_MOVEMENT[sq] = bb;
-    }
-}
-
-void initPawnAttackTables(void) {
-    for (int sq = 0; sq < 64;sq++) {
-        int file = sq%8;
-
-        Bitboard attack = 0;
-        if (file != A && sq <= H8) attack |= 1LL << (sq+9); // White west
-        PAWN_W_ATTACKS_WEST[sq] = attack;
-
-        attack = 0;
-        if (file != H && sq <= H8) attack |= 1LL << (sq+7); // White east
-        PAWN_W_ATTACKS_EAST[sq] = attack;
-
-        attack = 0;
-        if (file != H && sq >= H2) attack |= 1LL << (sq-9); // Black west
-        PAWN_B_ATTACKS_WEST[sq] = attack;
-
-        attack = 0;
-        if (file != A && sq >= H2) attack |= 1LL << (sq-7); // Black east
-        PAWN_B_ATTACKS_EAST[sq] = attack;
-    }
+Bitboard rookMovement(int square) {
+    // File and rank
+    int f, r;
+    
+    // Target file and rank
+    int tf = square % 8;
+    int tr = square / 8;
+    
+    Bitboard movement = 0ULL;
+    for (r = tr + 1; r <= 6; r++) movement |= (1ULL << (r * 8 + tf));
+    for (r = tr - 1; r >= 1; r--) movement |= (1ULL << (r * 8 + tf));
+    for (f = tf + 1; f <= 6; f++) movement |= (1ULL << (tr * 8 + f));
+    for (f = tf - 1; f >= 1; f--) movement |= (1ULL << (tr * 8 + f));
+    
+    return movement;
 }
 
 void initBishopRookAttackTables() {
     for (int square = 0; square < 64; square++) {
 
         // Fill movement masks
-        BISHOP_MOVEMENT[square] = genBishopMovement(square);
-        ROOK_MOVEMENT[square] = genRookMovement(square);
+        BISHOP_MOVEMENT[square] = bishopMovement(square);
+        ROOK_MOVEMENT[square] = rookMovement(square);
         
         Bitboard bishopMask = BISHOP_MOVEMENT[square];
         Bitboard rookMask = ROOK_MOVEMENT[square];
@@ -261,24 +264,17 @@ void initBishopRookAttackTables() {
         int rookOccupancyVariations = 1 << rookRelevantBits;
 
         for (int i = 0; i < bishopOccupancyVariations; i++) {
-            Bitboard occupancy = genOccupancyMask(i, bishopRelevantBits, bishopMask);
+            Bitboard occupancy = occupancyMask(i, bishopRelevantBits, bishopMask);
             Bitboard magic_index = occupancy * BISHOP_MAGICS[square] >> 64 - bishopRelevantBits;
             BISHOP_ATTACKS[square][magic_index] = bishopAttacksOnTheFly(square, occupancy);                
         }
 
         for (int i = 0; i < rookOccupancyVariations; i++) {
-            Bitboard occupancy = genOccupancyMask(i, rookRelevantBits, rookMask);
+            Bitboard occupancy = occupancyMask(i, rookRelevantBits, rookMask);
             Bitboard magic_index = occupancy * ROOK_MAGICS[square] >> 64 - rookRelevantBits;
             ROOK_ATTACKS[square][magic_index] = rookAttacksOnTheFly(square, occupancy);                
         }
     }
-}
-
-void initMoveGenerationTables(void) {
-    initKnightMovementTable();
-    initKingMovementTable();
-    initPawnAttackTables();
-    initBishopRookAttackTables();
 }
 
 Bitboard getBishopAttacks(int square, Bitboard occupancy) {
@@ -293,59 +289,6 @@ Bitboard getRookAttacks(int square, Bitboard occupancy) {
 	occupancy *=  ROOK_MAGICS[square];
 	occupancy >>= 64 - ROOK_RELEVANT_BITS[square];
 	return ROOK_ATTACKS[square][occupancy];
-}
-
-
-bool isSquareAttacked(Board board, int square) {
-    Bitboard occ = 0;
-    for (int i = 0; i < 12; i++) occ |= *(&(board.pawn_W)+i);
-    Bitboard sqBb = 1LL << square;
-
-    for (int i = 0; i < 64; i++) {
-        // Pawn
-        Bitboard pawn = board.turn ? board.pawn_B : board.pawn_W;
-        if (getBit(pawn, i)) {
-            if (board.turn) {
-                if (PAWN_B_ATTACKS_EAST[i] & sqBb) return true;
-                if (PAWN_B_ATTACKS_WEST[i] & sqBb) return true;
-            } else {
-                if (PAWN_W_ATTACKS_EAST[i] & sqBb) return true;
-                if (PAWN_W_ATTACKS_WEST[i] & sqBb) return true;
-            }
-        }
-
-        // King
-        Bitboard king = board.turn ? board.king_B : board.king_W;
-        if (getBit(king, i)) {
-            if (KING_MOVEMENT[i] & sqBb) return true;
-        }
-        // Knight
-        Bitboard knight = board.turn ? board.knight_B : board.knight_W;
-        if (getBit(knight, i)) {
-            if (KNIGHT_MOVEMENT[i] & sqBb) return true;
-        }
-        // Bishop
-        Bitboard bishop = board.turn ? board.bishop_B : board.bishop_W;
-        if (getBit(bishop, i)) {
-            Bitboard attacks = getBishopAttacks(i, occ);
-            if (attacks & sqBb) return true;
-        }
-        // Rook
-        Bitboard rook = board.turn ? board.rook_B : board.rook_W;
-        if (getBit(rook, i)) {
-            Bitboard attacks = getRookAttacks(i, occ);
-            if (attacks & sqBb) return true;
-        }
-        // Queen
-        Bitboard queen = board.turn ? board.queen_B : board.queen_W;
-        if (getBit(queen, i)) {
-            Bitboard attacks = getBishopAttacks(i, occ);
-            attacks |= getRookAttacks(i, occ);
-            if (attacks & sqBb) return true;
-        }
-    }
-
-    return false;
 }
 
 bool isMoveLegal(Board board, Move move) {
@@ -422,6 +365,72 @@ void addPawnAdvanceWithPossiblePromos(Board board, bool isPromoting, int turn, i
         Move move = getMove(from, to, NO_PROMOTION, NOT_CASTLE);
         addMove(board, move, moves, indx);
     }
+}
+
+
+/*---------------------------------------------
+                                             
+Visible methods
+
+---------------------------------------------*/
+
+void initMoveGeneration(void) {
+    initKnightMovementTable();
+    initKingMovementTable();
+    initPawnAttackTables();
+    initBishopRookAttackTables();
+}
+
+bool isSquareAttacked(Board board, int square) {
+    Bitboard occ = 0;
+    for (int i = 0; i < 12; i++) occ |= *(&(board.pawn_W)+i);
+    Bitboard sqBb = 1LL << square;
+
+    for (int i = 0; i < 64; i++) {
+        // Pawn
+        Bitboard pawn = board.turn ? board.pawn_B : board.pawn_W;
+        if (getBit(pawn, i)) {
+            if (board.turn) {
+                if (PAWN_B_ATTACKS_EAST[i] & sqBb) return true;
+                if (PAWN_B_ATTACKS_WEST[i] & sqBb) return true;
+            } else {
+                if (PAWN_W_ATTACKS_EAST[i] & sqBb) return true;
+                if (PAWN_W_ATTACKS_WEST[i] & sqBb) return true;
+            }
+        }
+
+        // King
+        Bitboard king = board.turn ? board.king_B : board.king_W;
+        if (getBit(king, i)) {
+            if (KING_MOVEMENT[i] & sqBb) return true;
+        }
+        // Knight
+        Bitboard knight = board.turn ? board.knight_B : board.knight_W;
+        if (getBit(knight, i)) {
+            if (KNIGHT_MOVEMENT[i] & sqBb) return true;
+        }
+        // Bishop
+        Bitboard bishop = board.turn ? board.bishop_B : board.bishop_W;
+        if (getBit(bishop, i)) {
+            Bitboard attacks = getBishopAttacks(i, occ);
+            if (attacks & sqBb) return true;
+        }
+        // Rook
+        Bitboard rook = board.turn ? board.rook_B : board.rook_W;
+        if (getBit(rook, i)) {
+            Bitboard attacks = getRookAttacks(i, occ);
+            if (attacks & sqBb) return true;
+        }
+        // Queen
+        Bitboard queen = board.turn ? board.queen_B : board.queen_W;
+        if (getBit(queen, i)) {
+            Bitboard attacks = getBishopAttacks(i, occ);
+            attacks |= getRookAttacks(i, occ);
+            if (attacks & sqBb) return true;
+        }
+    }
+
+    return false;
 }
 
 int legalMoves(Board board, Move moves[]) {

@@ -42,11 +42,11 @@ void pushMove(Board* board, Move move) {
             int capturedSquare = board->epSquare + (board->turn ? -8 : 8);
 
             // Capture the pawn
-            clearBit(opponentPawns, capturedSquare);
+            *opponentPawns = toggleBit(*opponentPawns, capturedSquare);
 
             // Move the pawn that takes
-            clearBit(friendlyPawns, move.fromSquare);
-            setBit(friendlyPawns, board->epSquare);
+            *friendlyPawns = toggleBit(*friendlyPawns, move.fromSquare);
+            *friendlyPawns = setBit(*friendlyPawns, board->epSquare);
 
             board->epSquare = -1;
             board->turn ^= 1;
@@ -58,20 +58,20 @@ void pushMove(Board* board, Move move) {
     if (move.castle) {
         if (move.castle == K) {
             board->king_W = board->king_W >> 2;
-            clearBit(&(board->rook_W), H1);
-            setBit(&(board->rook_W), F1);
+            board->rook_W = toggleBit(board->rook_W, H1);
+            board->rook_W = setBit(board->rook_W, F1);
         } else if (move.castle == Q) {
             board->king_W = board->king_W << 2;
-            clearBit(&(board->rook_W), A1);
-            setBit(&(board->rook_W), D1);
+            board->rook_W = toggleBit(board->rook_W, A1);
+            board->rook_W = setBit(board->rook_W, D1);
         } else if (move.castle == k) {
             board->king_B = board->king_B >> 2;
-            clearBit(&(board->rook_B), H8);
-            setBit(&(board->rook_B), F8);
+            board->rook_B = toggleBit(board->rook_B, H8);
+            board->rook_B = setBit(board->rook_B, F8);
         } else if (move.castle == q) {
             board->king_B = board->king_B << 2;
-            clearBit(&(board->rook_B), A8);
-            setBit(&(board->rook_B), D8);
+            board->rook_B = toggleBit(board->rook_B, A8);
+            board->rook_B = setBit(board->rook_B, D8);
         }
 
         // Update castling rights
@@ -113,10 +113,10 @@ void pushMove(Board* board, Move move) {
             }
 
             // "Lift up the piece"
-            clearBit(bb, move.fromSquare);
+            *bb = toggleBit(*bb, move.fromSquare);
 
             if (move.promotion <= 0) {
-                setBit(bb, move.toSquare);
+                *bb = setBit(*bb, move.toSquare);
             }
         } else if (getBit(*bb, move.toSquare)) {
 
@@ -129,7 +129,7 @@ void pushMove(Board* board, Move move) {
             }
 
             // Remove captured piece
-            clearBit(bb, move.toSquare);
+            *bb = toggleBit(*bb, move.toSquare);
         }
         ++bb;
     }
@@ -137,7 +137,7 @@ void pushMove(Board* board, Move move) {
     // Handle promotion
     if (move.promotion > 0) {
         Bitboard* targetMask = &(board->pawn_W) + move.promotion;
-        setBit(targetMask, move.toSquare);
+        *targetMask = setBit(*targetMask, move.toSquare);
     }
 
     // Toggle turn
