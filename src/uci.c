@@ -3,6 +3,10 @@
 #include <string.h>
 #include <time.h>
 #include "board.h"
+#include "fen.h"
+#include "search.h"
+#include "movegenerator.h"
+#include "evaluation.h"
 
 Board board;
 
@@ -56,13 +60,11 @@ void parsePosition(char *command) {
 }
 
 void getBestMove(void) {
-    Move moves[250];
-    int length = legalMoves(board, moves);
-
-    Move best = moves[rand() % length];
-
+    Move bestMove;
+    int nodesSearched;
+    int eval = search(board, &bestMove, &nodesSearched);
     char san[6];
-    moveToSan(best, san);
+    moveToSan(bestMove, san);
     printf("bestmove %s\n", san);
 }
 
@@ -79,8 +81,8 @@ int main(void) {
     int bufferSize = 2000;
     char input[bufferSize];
 
-
     initMoveGeneration();
+    initEvaluation();
     srand(time(NULL));
 
     while(1) {

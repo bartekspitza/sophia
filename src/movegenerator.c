@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include "movegenerator.h"
-#include "utils.h"
 #include "board.h"
 
 #define getMove(from, to, promo, castling) {.fromSquare=from, .toSquare=to, .promotion=promo, .castle=castling}

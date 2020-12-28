@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "board.h"
-#include "utils.h"
+#include "movegenerator.h"
 
 char SQUARE_NAMES[64][3] = {
     "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1",

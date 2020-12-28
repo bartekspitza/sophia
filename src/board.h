@@ -2,8 +2,6 @@
 #define BOARD_H
 
 #include "typedefs.h"
-#include "fen.h"
-#include "movegenerator.h"
 
 #define getBit(bitboard, square) (bitboard & (1ULL << square))
 #define popBit(bitboard, square) (bitboard & ~(1ULL << square))
