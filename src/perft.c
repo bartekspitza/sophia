@@ -17,7 +17,7 @@ char* FENS[250] = {
   "8/3k4/8/4b3/1p1p1p2/8/1PPRP2K/8 w - -",
   "8/4rP2/8/8/4pk2/8/3P2PP/4K2R w K -"
 };
-int NUM_FENS = 6;
+int NUM_FENS = 8;
 
 // Starting from depth 1
 u64 EXPECTED_RESULTS[][6] = {
@@ -45,7 +45,7 @@ int main() {
       Board board;
       setFen(&board, fen);
 
-      u64 nodes = perft(board, depth, true);
+      u64 nodes = perft(board, depth, false);
       u64 expected = EXPECTED_RESULTS[i][depth-1];
       bool matches = nodes == expected;
 
