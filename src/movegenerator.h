@@ -8,6 +8,7 @@
 extern Bitboard PAWN_START_WHITE;
 extern Bitboard PAWN_START_BLACK;
 
+int bitScanForward(Bitboard* bb);
 void initMoveGeneration(void);
 bool isSquareAttacked(Board board, int square);
 void moveToSan(Move move, char san[]);

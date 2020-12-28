@@ -55,6 +55,8 @@ enum SQUARES {
     H8, G8, F8, E8, D8, C8, B8, A8
 };
 
+enum GAME_RESULT {WHITE_WIN, BLACK_WIN, DRAW, NOT_DETERMINED};
+
 enum CASTLING {K=1, Q=2, k=4, q=8};
 
 enum FILES {H, G, F, E, D, C, B, A};

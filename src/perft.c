@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include "board.h"
+#include "evaluation.h"
 
 typedef unsigned long long u64;
 u64 perft(Board board, int depth, bool divide);
@@ -33,8 +34,17 @@ u64 EXPECTED_RESULTS[][6] = {
 
 int main() {
     initMoveGeneration();
+    initEvaluation();
 
-    int depth = 5;
+    Board board;
+    setFen(&board, "rr2k3/8/8/8/8/8/8/K7 w q - 0 1");
+
+    int eval = evaluate(board);
+
+    printf("%d\n", eval);
+
+    /*
+    int depth = 6;
     printf("Depth %d\n\n", depth);
 
 
@@ -45,7 +55,7 @@ int main() {
       Board board;
       setFen(&board, fen);
 
-      u64 nodes = perft(board, depth, false);
+      u64 nodes = perft(board, depth, true);
       u64 expected = EXPECTED_RESULTS[i][depth-1];
       bool matches = nodes == expected;
 
@@ -60,6 +70,7 @@ int main() {
     clock_t end = clock();
     double time_spent = (double) (end - start) / CLOCKS_PER_SEC;
     printf("\nDone in: %.2fs\n", time_spent);
+    */
 
     return 0;
 }

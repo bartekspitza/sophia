@@ -25,7 +25,6 @@ void parsePosition(char *command) {
             setFen(&board, current_char);
         }
     }
-
     
     // parse moves after position
     current_char = strstr(command, "moves");

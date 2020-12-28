@@ -21,6 +21,17 @@ char CASTLING_RIGHTS[4][2] = { "K", "Q", "k", "q" };
 int ALL_CASTLE_W = 0b0011;
 int ALL_CASTLE_B = 0b1100;
 
+int result(Board board) {
+    Move moves[250];
+    int length = legalMoves(board, moves);
+
+    if (length == 0) {
+        return board.turn ? BLACK_WIN : WHITE_WIN;
+    }
+
+    return NOT_DETERMINED;
+}
+
 void computeOccupancyMasks(Board* board) {
     board->occupancyWhite = 0;
     board->occupancyBlack = 0;
