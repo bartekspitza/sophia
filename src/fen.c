@@ -122,6 +122,7 @@ void setFen(Board* board, char* fen) {
 		fen++;
 	}
 
+    // Initialize king squares
     for (int i = 0; i < 64; i++) {
         if (getBit(board->king_W, i)) {
             board->whiteKingSq = i;
@@ -130,4 +131,7 @@ void setFen(Board* board, char* fen) {
             board->blackKingSq = i;
         }
     }
+
+    // Initialize occupancy masks
+    computeOccupancyMasks(board);
 }

@@ -10,6 +10,7 @@
 #define setBit(bitboard, square) bitboard | (1ULL << square)
 #define toggleBit(bitboard, square) (bitboard ^= (1ULL << square))
 
+void computeOccupancyMasks(Board* board);
 void printBoard(Board board);
 void pushMove(Board* board, Move move);
 void pushSan(Board* board, char* san);

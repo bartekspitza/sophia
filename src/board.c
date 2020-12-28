@@ -21,6 +21,16 @@ char CASTLING_RIGHTS[4][2] = { "K", "Q", "k", "q" };
 int ALL_CASTLE_W = 0b0011;
 int ALL_CASTLE_B = 0b1100;
 
+void computeOccupancyMasks(Board* board) {
+    board->occupancyWhite = 0;
+    board->occupancyBlack = 0;
+    for (int i = 0; i < 6;i++) {
+        board->occupancyWhite |= *(&(board->pawn_W)+i);
+        board->occupancyBlack |= *(&(board->pawn_B)+i);
+    }
+    board->occupancy = board->occupancyBlack | board->occupancyWhite;
+}
+
 
 void pushSan(Board* board, char* san) {
     Move move;
@@ -47,6 +57,7 @@ void pushMove(Board* board, Move move) {
 
             board->epSquare = -1;
             board->turn ^= 1;
+            computeOccupancyMasks(board);
             return;
         }
     } 
@@ -80,6 +91,7 @@ void pushMove(Board* board, Move move) {
 
         board->epSquare = -1;
         board->turn ^= 1;
+        computeOccupancyMasks(board);
         return;
     }
 
@@ -151,6 +163,9 @@ void pushMove(Board* board, Move move) {
 
     // Toggle turn
     board->turn ^= 1;
+
+    // Update occupancy
+    computeOccupancyMasks(board);
 }
 
 void printBoard(Board board) {

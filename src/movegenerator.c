@@ -316,15 +316,15 @@ void addMove(Board board, Move move, Move moves[], int* indx) {
     }
 }
 
-Bitboard getKingMask(Board board, Bitboard occWhite, Bitboard occBlack) {
+Bitboard getKingMask(Board board) {
     int kingSquare = board.turn ? board.whiteKingSq : board.blackKingSq;
 
     Bitboard kingMoves = KING_MOVEMENT[kingSquare];
-    Bitboard occ = board.turn ? occWhite : occBlack;
+    Bitboard occ = board.turn ? board.occupancyWhite : board.occupancyBlack;
     return kingMoves ^ (kingMoves & occ);
 }
 
-void pawnSingleAndDblPushes(Board board, Bitboard occ, Bitboard* singlePush, Bitboard* doublePush) {
+void pawnSingleAndDblPushes(Board board, Bitboard* singlePush, Bitboard* doublePush) {
     Bitboard single;
     Bitboard dbl;
 
@@ -333,14 +333,14 @@ void pawnSingleAndDblPushes(Board board, Bitboard occ, Bitboard* singlePush, Bit
     } else {
         single = board.pawn_B >> 8;
     }
-    single ^= single & occ;
+    single ^= single & board.occupancy;
 
     if (board.turn) {
         dbl = (board.pawn_W & PAWN_START_WHITE) << 16;
     } else {
         dbl = (board.pawn_B & PAWN_START_BLACK) >> 16;
     }
-    dbl ^= dbl & occ;
+    dbl ^= dbl & board.occupancy;
     dbl = board.turn ? dbl >> 8 : dbl << 8;
     dbl &= single;
     dbl = board.turn ? dbl << 8 : dbl >> 8;
@@ -376,84 +376,74 @@ void initMoveGeneration(void) {
 }
 
 bool isSquareAttacked(Board board, int square) {
-    Bitboard occ = 0;
-    for (int i = 0; i < 12; i++) occ |= *(&(board.pawn_W)+i);
+
     Bitboard sqBb = 1LL << square;
 
-    for (int i = 0; i < 64; i++) {
-        // Pawn
-        Bitboard pawn = board.turn ? board.pawn_B : board.pawn_W;
-        if (getBit(pawn, i)) {
-            if (board.turn) {
-                if (PAWN_B_ATTACKS_EAST[i] & sqBb) return true;
-                if (PAWN_B_ATTACKS_WEST[i] & sqBb) return true;
-            } else {
-                if (PAWN_W_ATTACKS_EAST[i] & sqBb) return true;
-                if (PAWN_W_ATTACKS_WEST[i] & sqBb) return true;
-            }
-        }
+    Bitboard pawn = board.turn ? board.pawn_B : board.pawn_W;
+    Bitboard king = board.turn ? board.king_B : board.king_W;
+    Bitboard knight = board.turn ? board.knight_B : board.knight_W;
+    Bitboard bishop = board.turn ? board.bishop_B : board.bishop_W;
+    Bitboard rook = board.turn ? board.rook_B : board.rook_W;
+    Bitboard queen = board.turn ? board.queen_B : board.queen_W;
 
-        // King
-        Bitboard king = board.turn ? board.king_B : board.king_W;
-        if (getBit(king, i)) {
-            if (KING_MOVEMENT[i] & sqBb) return true;
+    while (pawn) {
+        int sq = bitScanForward(&pawn);
+
+        if (board.turn) {
+            if (PAWN_B_ATTACKS_EAST[sq] & sqBb) return true;
+            if (PAWN_B_ATTACKS_WEST[sq] & sqBb) return true;
+        } else {
+            if (PAWN_W_ATTACKS_EAST[sq] & sqBb) return true;
+            if (PAWN_W_ATTACKS_WEST[sq] & sqBb) return true;
         }
-        // Knight
-        Bitboard knight = board.turn ? board.knight_B : board.knight_W;
-        if (getBit(knight, i)) {
-            if (KNIGHT_MOVEMENT[i] & sqBb) return true;
-        }
-        // Bishop
-        Bitboard bishop = board.turn ? board.bishop_B : board.bishop_W;
-        if (getBit(bishop, i)) {
-            Bitboard attacks = getBishopAttacks(i, occ);
-            if (attacks & sqBb) return true;
-        }
-        // Rook
-        Bitboard rook = board.turn ? board.rook_B : board.rook_W;
-        if (getBit(rook, i)) {
-            Bitboard attacks = getRookAttacks(i, occ);
-            if (attacks & sqBb) return true;
-        }
-        // Queen
-        Bitboard queen = board.turn ? board.queen_B : board.queen_W;
-        if (getBit(queen, i)) {
-            Bitboard attacks = getBishopAttacks(i, occ);
-            attacks |= getRookAttacks(i, occ);
-            if (attacks & sqBb) return true;
-        }
+    }
+
+    while (king) {
+        int sq = bitScanForward(&king);
+        if (KING_MOVEMENT[sq] & sqBb) return true;
+    }
+    while (knight) {
+        int sq = bitScanForward(&knight);
+        if (KNIGHT_MOVEMENT[sq] & sqBb) return true;
+    }
+    while (bishop) {
+        int sq = bitScanForward(&bishop);
+        Bitboard attacks = getBishopAttacks(sq, board.occupancy);
+        if (attacks & sqBb) return true;
+    }
+    while (rook) {
+        int sq = bitScanForward(&rook);
+        Bitboard attacks = getRookAttacks(sq, board.occupancy);
+        if (attacks & sqBb) return true;
+    }
+    while (queen) {
+        int sq = bitScanForward(&queen);
+
+        Bitboard attacks = getBishopAttacks(sq, board.occupancy);
+        attacks |= getRookAttacks(sq, board.occupancy);
+        if (attacks & sqBb) return true;
     }
 
     return false;
 }
 
 int legalMoves(Board board, Move moves[]) {
-
-    // Occupancy calculations
-    Bitboard occupancyWhite = 0;
-    Bitboard occupancyBlack = 0;
-    for (int i = 0; i < 6;i++) {
-        occupancyWhite |= *(&(board.pawn_W)+i);
-        occupancyBlack |= *(&(board.pawn_B)+i);
-    }
-    Bitboard occupancy = occupancyBlack | occupancyWhite;
-    Bitboard friendlyOccupancy = board.turn ? occupancyWhite : occupancyBlack;
     int length = 0;
 
-    // King moves
+    // Color relative variables
     int kingSquare = board.turn ? board.whiteKingSq : board.blackKingSq;
-    Bitboard kingMovesMask = getKingMask(board, occupancyWhite, occupancyBlack);
-
-    // Pawn single and double pushes
-    Bitboard singlePush;
-    Bitboard doublePush;
-    pawnSingleAndDblPushes(board, occupancy, &singlePush, &doublePush);
-
+    Bitboard friendlyOccupancy = board.turn ? board.occupancyWhite : board.occupancyBlack;
     Bitboard bishopBitboard = board.turn ? board.bishop_W : board.bishop_B;
     Bitboard rookBitboard = board.turn ? board.rook_W : board.rook_B;
     Bitboard queenBitboard = board.turn ? board.queen_W : board.queen_B;
     Bitboard knightBitboard = board.turn ? board.knight_W : board.knight_B;
     Bitboard pawnMask = board.turn ? board.pawn_W : board.pawn_B;
+ 
+    Bitboard singlePush;
+    Bitboard doublePush;
+    pawnSingleAndDblPushes(board, &singlePush, &doublePush);
+    Bitboard kingMovesMask = getKingMask(board);
+
     Bitboard epSquare = board.epSquare == -1 ? 0LL : 1LL << board.epSquare;
 
     // Pawn attacks
@@ -462,25 +452,25 @@ int legalMoves(Board board, Move moves[]) {
         bool isPromoting = board.turn ? (sq >= H7 && sq <= A7) : (sq >= H2 && sq <= A2);
         if (board.turn) {
             // Pawn east attack
-            if (PAWN_W_ATTACKS_EAST[sq] & (occupancyBlack | epSquare)) {
+            if (PAWN_W_ATTACKS_EAST[sq] & (board.occupancyBlack | epSquare)) {
                 int toSquare = sq + 7;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
             
             // Pawn west attack
-            if (PAWN_W_ATTACKS_WEST[sq] & (occupancyBlack | epSquare)) {
+            if (PAWN_W_ATTACKS_WEST[sq] & (board.occupancyBlack | epSquare)) {
                 int toSquare = sq + 9;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
         } else {
             // Pawn east attack
-            if (PAWN_B_ATTACKS_EAST[sq] & (occupancyWhite | epSquare)) {
+            if (PAWN_B_ATTACKS_EAST[sq] & (board.occupancyWhite | epSquare)) {
                 int toSquare = sq - 7;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
             
             // Pawn west attack
-            if (PAWN_B_ATTACKS_WEST[sq] & (occupancyWhite | epSquare)) {
+            if (PAWN_B_ATTACKS_WEST[sq] & (board.occupancyWhite | epSquare)) {
                 int toSquare = sq - 9;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
@@ -509,7 +499,7 @@ int legalMoves(Board board, Move moves[]) {
     }
     while (bishopBitboard) {
         int sq = bitScanForward(&bishopBitboard);
-        Bitboard target = getBishopAttacks(sq, occupancy);
+        Bitboard target = getBishopAttacks(sq, board.occupancy);
         target ^= target & friendlyOccupancy;
 
         while (target) {
@@ -520,7 +510,7 @@ int legalMoves(Board board, Move moves[]) {
     }
     while (rookBitboard) {
         int sq = bitScanForward(&rookBitboard);
-            Bitboard target = getRookAttacks(sq, occupancy);
+            Bitboard target = getRookAttacks(sq, board.occupancy);
             target ^= target & friendlyOccupancy;
 
             while (target) {
@@ -532,8 +522,8 @@ int legalMoves(Board board, Move moves[]) {
     }
     while (queenBitboard) {
         int sq = bitScanForward(&queenBitboard);
-        Bitboard rookAttacks = getRookAttacks(sq, occupancy);
-        Bitboard bishopAttacks = getBishopAttacks(sq, occupancy);
+        Bitboard rookAttacks = getRookAttacks(sq, board.occupancy);
+        Bitboard bishopAttacks = getBishopAttacks(sq, board.occupancy);
         Bitboard target = bishopAttacks | rookAttacks;
         target ^= target & friendlyOccupancy;
 
@@ -559,7 +549,7 @@ int legalMoves(Board board, Move moves[]) {
     if (board.turn) {
         if (board.castling & K) {
             bool isNotInCheck = ! isSquareAttacked(board, E1);
-            bool pathClear = getBit(occupancy, F1) == 0 && getBit(occupancy, G1) == 0;
+            bool pathClear = getBit(board.occupancy, F1) == 0 && getBit(board.occupancy, G1) == 0;
             bool noAttacks = ! isSquareAttacked(board, F1);
             pathClear = pathClear && noAttacks;
 
@@ -570,7 +560,7 @@ int legalMoves(Board board, Move moves[]) {
         }
         if (board.castling & Q) {
             bool isNotInCheck = ! isSquareAttacked(board, E1);
-            bool pathClear = getBit(occupancy, B1) == 0 && getBit(occupancy, C1) == 0 && getBit(occupancy, D1) == 0;
+            bool pathClear = getBit(board.occupancy, B1) == 0 && getBit(board.occupancy, C1) == 0 && getBit(board.occupancy, D1) == 0;
             bool noAttacks = ! isSquareAttacked(board, D1);
             pathClear = pathClear && noAttacks;
 
@@ -582,7 +572,7 @@ int legalMoves(Board board, Move moves[]) {
     } else {
         if (board.castling & k) {
             bool isNotInCheck = ! isSquareAttacked(board, E8);
-            bool pathClear = getBit(occupancy, F8) == 0 && getBit(occupancy, G8) == 0;
+            bool pathClear = getBit(board.occupancy, F8) == 0 && getBit(board.occupancy, G8) == 0;
             bool noAttacks = ! isSquareAttacked(board, F8);
             pathClear = pathClear && noAttacks;
 
@@ -593,7 +583,7 @@ int legalMoves(Board board, Move moves[]) {
         }
         if (board.castling & q) {
             bool isNotInCheck = ! isSquareAttacked(board, E8);
-            bool pathClear = getBit(occupancy, B8) == 0 && getBit(occupancy, C8) == 0 && getBit(occupancy, D8) == 0;
+            bool pathClear = getBit(board.occupancy, B8) == 0 && getBit(board.occupancy, C8) == 0 && getBit(board.occupancy, D8) == 0;
             bool noAttacks = ! isSquareAttacked(board, D8);
             pathClear = pathClear && noAttacks;
 

@@ -27,6 +27,9 @@ typedef struct {
     int fullmoves;
     int whiteKingSq;
     int blackKingSq;
+    Bitboard occupancy;
+    Bitboard occupancyWhite;
+    Bitboard occupancyBlack;
 } Board;
 
 typedef struct {
