@@ -21,9 +21,6 @@ char CASTLING_RIGHTS[4][2] = { "K", "Q", "k", "q" };
 int ALL_CASTLE_W = 0b0011;
 int ALL_CASTLE_B = 0b1100;
 
-Bitboard* pieceBitboard(Board* board, int pieceType) {
-    return (Bitboard*) board + pieceType;
-}
 
 void pushSan(Board* board, char* san) {
     Move move;

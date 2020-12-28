@@ -2,6 +2,10 @@
 #include "fen.h"
 #include "board.h"
 
+Bitboard* pieceBitboard(Board* board, int pieceType) {
+    return (Bitboard*) board + pieceType;
+}
+
 void reset(Board* board) {
     Bitboard* bb = (Bitboard*) (board);
     for (int i = 0; i < 12; i++) {

@@ -13,6 +13,5 @@
 void printBoard(Board board);
 void pushMove(Board* board, Move move);
 void pushSan(Board* board, char* san);
-Bitboard* pieceBitboard(Board* board, int pieceType);
 
 #endif
