@@ -5,7 +5,7 @@
 #include "board.h"
 #include "fen.h"
 #include "search.h"
-#include "movegenerator.h"
+#include "movegen.h"
 #include "evaluation.h"
 
 Board board;
