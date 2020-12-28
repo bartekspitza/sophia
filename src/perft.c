@@ -36,7 +36,7 @@ u64 EXPECTED_RESULTS[][6] = {
 int main() {
     initMoveGeneration();
 
-    int depth = 5;
+    int depth = 6;
     printf("Depth %d\n\n", depth);
 
 
