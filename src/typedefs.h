@@ -25,6 +25,8 @@ typedef struct {
     int epSquare;
     int halfmoves;
     int fullmoves;
+    int whiteKingSq;
+    int blackKingSq;
 } Board;
 
 typedef struct {

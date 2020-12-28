@@ -60,18 +60,22 @@ void pushMove(Board* board, Move move) {
             board->king_W = board->king_W >> 2;
             board->rook_W = toggleBit(board->rook_W, H1);
             board->rook_W = setBit(board->rook_W, F1);
+            board->whiteKingSq = G1;
         } else if (move.castle == Q) {
             board->king_W = board->king_W << 2;
             board->rook_W = toggleBit(board->rook_W, A1);
             board->rook_W = setBit(board->rook_W, D1);
+            board->whiteKingSq = C1;
         } else if (move.castle == k) {
             board->king_B = board->king_B >> 2;
             board->rook_B = toggleBit(board->rook_B, H8);
             board->rook_B = setBit(board->rook_B, F8);
+            board->blackKingSq = G8;
         } else if (move.castle == q) {
             board->king_B = board->king_B << 2;
             board->rook_B = toggleBit(board->rook_B, A8);
             board->rook_B = setBit(board->rook_B, D8);
+            board->blackKingSq = C8;
         }
 
         // Update castling rights
@@ -115,9 +119,17 @@ void pushMove(Board* board, Move move) {
             // "Lift up the piece"
             *bb = toggleBit(*bb, move.fromSquare);
 
+            // If not promotion set the piece square directly
             if (move.promotion <= 0) {
                 *bb = setBit(*bb, move.toSquare);
+
+                if (*bb == board->king_W) {
+                    board->whiteKingSq = move.toSquare;
+                } else if (*bb == board->king_B) {
+                    board->blackKingSq = move.toSquare;
+                }
             }
+
         } else if (getBit(*bb, move.toSquare)) {
 
             // Update castling rights if rooks are captured

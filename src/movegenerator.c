@@ -118,6 +118,14 @@ Magic bitboard methods
 
 ---------------------------------------------*/
 
+int bitScanForward(Bitboard* bb) {
+    Bitboard tmp = *bb & -(*bb);
+    int indx = __builtin_ctzl(*bb);
+    *bb ^= tmp;
+
+    return indx;
+}
+
 int countBits(Bitboard bitboard) {
   int count = 0;
   
@@ -295,14 +303,7 @@ bool isMoveLegal(Board board, Move move) {
     Board cpy = board;
     pushMove(&cpy, move);
 
-    Bitboard kingMask = cpy.turn ? cpy.king_B : cpy.king_W;
-    int kingSquare;
-    for (int i = 0; i < 64;i++) {
-        if (getBit(kingMask, i)) {
-            kingSquare = i;
-            break;
-        }
-    }
+    int kingSquare = cpy.turn ? cpy.blackKingSq : cpy.whiteKingSq;
     cpy.turn ^= 1;
 
     return ! isSquareAttacked(cpy, kingSquare);
@@ -315,17 +316,10 @@ void addMove(Board board, Move move, Move moves[], int* indx) {
     }
 }
 
-Bitboard getKingMask(Board board, Bitboard occWhite, Bitboard occBlack, int* kingSquare) {
-    Bitboard kingPosMask = board.turn ? board.king_W : board.king_B;
+Bitboard getKingMask(Board board, Bitboard occWhite, Bitboard occBlack) {
+    int kingSquare = board.turn ? board.whiteKingSq : board.blackKingSq;
 
-    for (int i = 0; i < 64;i++) {
-        if (getBit(kingPosMask, i)) {
-            *kingSquare = i;
-            break;
-        }
-    }
-
-    Bitboard kingMoves = KING_MOVEMENT[*kingSquare];
+    Bitboard kingMoves = KING_MOVEMENT[kingSquare];
     Bitboard occ = board.turn ? occWhite : occBlack;
     return kingMoves ^ (kingMoves & occ);
 }
@@ -447,8 +441,8 @@ int legalMoves(Board board, Move moves[]) {
     int length = 0;
 
     // King moves
-    int kingSquare;
-    Bitboard kingMovesMask = getKingMask(board, occupancyWhite, occupancyBlack, &kingSquare);
+    int kingSquare = board.turn ? board.whiteKingSq : board.blackKingSq;
+    Bitboard kingMovesMask = getKingMask(board, occupancyWhite, occupancyBlack);
 
     // Pawn single and double pushes
     Bitboard singlePush;
@@ -521,11 +515,10 @@ int legalMoves(Board board, Move moves[]) {
             Bitboard target = getBishopAttacks(sq, occupancy);
             target ^= target & friendlyOccupancy;
 
-            for (int i = 0; i < 64; i++) {
-                if (getBit(target, i)) {
-                    Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
-                    addMove(board, move, moves, &length);
-                }
+            while (target) {
+                int indx = bitScanForward(&target);
+                Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE);
+                addMove(board, move, moves, &length);
             }
         }
 
@@ -534,11 +527,10 @@ int legalMoves(Board board, Move moves[]) {
             Bitboard target = getRookAttacks(sq, occupancy);
             target ^= target & friendlyOccupancy;
 
-            for (int i = 0; i < 64; i++) {
-                if (getBit(target, i)) {
-                    Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
-                    addMove(board, move, moves, &length);
-                }
+            while (target) {
+                int indx = bitScanForward(&target);
+                Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE);
+                addMove(board, move, moves, &length);
             }
         }
 
@@ -552,23 +544,22 @@ int legalMoves(Board board, Move moves[]) {
 
             Bitboard target = bishopAttacks | rookAttacks;
 
-            for (int i = 0; i < 64; i++) {
-                if (getBit(target, i)) {
-                    Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
-                    addMove(board, move, moves, &length);
-                }
+            while (target) {
+                int indx = bitScanForward(&target);
+                Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE);
+                addMove(board, move, moves, &length);
             }
         }
 
         // Knight
         if (getBit(knightBitboard, sq)) {
             Bitboard target = KNIGHT_MOVEMENT[sq] ^ (KNIGHT_MOVEMENT[sq] & friendlyOccupancy);
-                for (int i = 0; i < 64; i++) {
-                    if (getBit(target, i)) {
-                        Move move = getMove(sq, i, NO_PROMOTION, NOT_CASTLE);
-                        addMove(board, move, moves, &length);
-                    }
-                }
+
+            while (target) {
+                int indx = bitScanForward(&target);
+                Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE);
+                addMove(board, move, moves, &length);
+            }
         }
     }
 

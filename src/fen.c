@@ -117,4 +117,13 @@ void setFen(Board* board, char* fen) {
 		
 		fen++;
 	}
+
+    for (int i = 0; i < 64; i++) {
+        if (getBit(board->king_W, i)) {
+            board->whiteKingSq = i;
+        }
+        if (getBit(board->king_B, i)) {
+            board->blackKingSq = i;
+        }
+    }
 }
