@@ -4,7 +4,7 @@
 #include <time.h>
 #include "board.h"
 #include "fen.h"
-#include "movegenerator.h"
+#include "movegen.h"
 
 typedef unsigned long long u64;
 u64 perft(Board board, int depth, bool divide);

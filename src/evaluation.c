@@ -1,5 +1,5 @@
 #include "evaluation.h"
-#include "movegenerator.h"
+#include "movegen.h"
 #include "board.h"
 
 int PIECE_VALUES[] = {

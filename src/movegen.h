@@ -1,5 +1,5 @@
-#ifndef MOVEGENERATOR_H
-#define MOVEGENERATOR_H
+#ifndef MOVEGEN_H
+#define MOVEGEN_H
 
 #include <stdbool.h>
 #include "typedefs.h"
