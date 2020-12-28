@@ -376,9 +376,7 @@ void initMoveGeneration(void) {
 }
 
 bool isSquareAttacked(Board board, int square) {
-
     Bitboard sqBb = 1LL << square;
-
     Bitboard pawn = board.turn ? board.pawn_B : board.pawn_W;
     Bitboard king = board.turn ? board.king_B : board.king_W;
     Bitboard knight = board.turn ? board.knight_B : board.knight_W;
@@ -386,25 +384,12 @@ bool isSquareAttacked(Board board, int square) {
     Bitboard rook = board.turn ? board.rook_B : board.rook_W;
     Bitboard queen = board.turn ? board.queen_B : board.queen_W;
 
-    while (pawn) {
-        int sq = bitScanForward(&pawn);
+    while (queen) {
+        int sq = bitScanForward(&queen);
 
-        if (board.turn) {
-            if (PAWN_B_ATTACKS_EAST[sq] & sqBb) return true;
-            if (PAWN_B_ATTACKS_WEST[sq] & sqBb) return true;
-        } else {
-            if (PAWN_W_ATTACKS_EAST[sq] & sqBb) return true;
-            if (PAWN_W_ATTACKS_WEST[sq] & sqBb) return true;
-        }
-    }
-
-    while (king) {
-        int sq = bitScanForward(&king);
-        if (KING_MOVEMENT[sq] & sqBb) return true;
-    }
-    while (knight) {
-        int sq = bitScanForward(&knight);
-        if (KNIGHT_MOVEMENT[sq] & sqBb) return true;
+        Bitboard attacks = getBishopAttacks(sq, board.occupancy);
+        attacks |= getRookAttacks(sq, board.occupancy);
+        if (attacks & sqBb) return true;
     }
     while (bishop) {
         int sq = bitScanForward(&bishop);
@@ -416,12 +401,24 @@ bool isSquareAttacked(Board board, int square) {
         Bitboard attacks = getRookAttacks(sq, board.occupancy);
         if (attacks & sqBb) return true;
     }
-    while (queen) {
-        int sq = bitScanForward(&queen);
+    while (knight) {
+        int sq = bitScanForward(&knight);
+        if (KNIGHT_MOVEMENT[sq] & sqBb) return true;
+    }
+    while (pawn) {
+        int sq = bitScanForward(&pawn);
 
-        Bitboard attacks = getBishopAttacks(sq, board.occupancy);
-        attacks |= getRookAttacks(sq, board.occupancy);
-        if (attacks & sqBb) return true;
+        if (board.turn) {
+            if (PAWN_B_ATTACKS_EAST[sq] & sqBb) return true;
+            if (PAWN_B_ATTACKS_WEST[sq] & sqBb) return true;
+        } else {
+            if (PAWN_W_ATTACKS_EAST[sq] & sqBb) return true;
+            if (PAWN_W_ATTACKS_WEST[sq] & sqBb) return true;
+        }
+    }
+    while (king) {
+        int sq = bitScanForward(&king);
+        if (KING_MOVEMENT[sq] & sqBb) return true;
     }
 
     return false;
