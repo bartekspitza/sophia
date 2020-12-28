@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "board.h"
 #include "fen.h"
 #include "search.h"
@@ -109,11 +110,20 @@ void parsePosition(char *command, Board* board) {
 }
 
 void getBestMove(Board board) {
+    int depth = 2;
+    int nodesSearched = 0;
+
+    clock_t start = clock();
     Move bestMove;
-    int nodesSearched;
-    int eval = search(board, &bestMove, &nodesSearched);
+    int eval = search(board, depth, &bestMove, &nodesSearched);
+    clock_t end = clock();
+    double time_spent = (double) (end - start) / CLOCKS_PER_SEC * 1000;
+
+    double score = (double) eval / 100.0;
+
     char san[6];
     moveToSan(bestMove, san);
+    printf("info depth %d time %.0f nodes %d score %.2f\n", depth, time_spent, nodesSearched, score);
     printf("bestmove %s\n", san);
 }
 

@@ -51,10 +51,7 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
     return eval;
 }
 
-int search(Board board, Move* move, int* nodesSearched) {
-    *nodesSearched = 0;
-    int depth = 4;
+int search(Board board, int depth, Move* move, int* nodesSearched) {
     int eval = negamax(board, move, depth, MIN_EVAL, MAX_EVAL, depth, nodesSearched);
-
     return eval;
 }
