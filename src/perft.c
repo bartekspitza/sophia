@@ -5,6 +5,7 @@
 #include "board.h"
 #include "fen.h"
 #include "movegen.h"
+#include "search.h"
 
 typedef unsigned long long u64;
 u64 perft(Board board, int depth, bool divide);
@@ -36,6 +37,29 @@ u64 EXPECTED_RESULTS[][6] = {
 int main() {
     initMoveGeneration();
 
+    Board board;
+    setFen(&board, "rnbq1bnr/1p5k/2pp1p2/p4p2/8/2NPB1RP/PPPNB2K/R2Q4 b - - 0 17");
+
+    Move moves[250];
+    int length = legalMoves(board, moves);
+
+    for (int i = 0; i < length; i++)
+    {
+      char san[6];
+      moveToSan(moves[i], san);
+      printf("%s\n", san);
+      memset(san, 0, sizeof(san));
+    }
+
+    Move move;
+    int searched;
+    search(board, 2, &move, &searched);
+    char san[6];
+    moveToSan(move, san);
+    printf("bestmove %s\n", san);
+    
+
+    /*
     int depth = 5;
     printf("Depth %d\n\n", depth);
 
@@ -62,6 +86,7 @@ int main() {
     clock_t end = clock();
     double time_spent = (double) (end - start) / CLOCKS_PER_SEC;
     printf("\nDone in: %.2fs\n", time_spent);
+    */
 
     return 0;
 }
