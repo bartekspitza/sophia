@@ -62,49 +62,31 @@ int main(void) {
 
 void parsePosition(char *command, Board* board) {
     // shift pointer to the right where next token begins
+
     command += 9;
-    
     char *current_char = command;
     
-    if (strncmp(command, "startpos", 8) == 0) {
-        setFen(board, START_FEN);
-    
-    } else {
-        current_char = strstr(command, "fen");
-        
-        if (current_char == NULL) {
-            setFen(board, START_FEN);
-        } else {
-            current_char += 4;
-            setFen(board, current_char);
-        }
+    setFen(board, START_FEN);
+
+    current_char = strstr(command, "fen");
+    if (current_char != NULL) {
+        current_char += 4;
+        setFen(board, current_char);
     }
     
-    // parse moves after position
-    current_char = strstr(command, "moves");
-    
-    // moves available
-    if (current_char != NULL)
-    {
-        // shift pointer to the right where next token begins
-        current_char += 6;
+    char* san = strstr(command, "moves");
+
+    if (san != NULL) {
+        san += 6;
         
-        // loop over moves within a move string
-        while(*current_char)
-        {
-            // parse next move
-            Move move; 
-            sanToMove(*board, &move, current_char);
+        while(*san) {
+            pushSan(board, san);
             
+            // Move pointer to end of current move
+            while (*san && *san != ' ') san++;
             
-            // make move on the chess board
-            pushMove(board, move);
-            
-            // move current character mointer to the end of current move
-            while (*current_char && *current_char != ' ') current_char++;
-            
-            // go to the next move
-            current_char++;
+            // Move pointer to beginning of next move
+            san++;
         }        
     }
 }
