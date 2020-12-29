@@ -604,35 +604,39 @@ void printMoves(Move moves[], int length) {
 }
 
 void sanToMove(Board board, Move* move, char* san) {
-    if (san[0] == 'O' && san[3] != '-') {
-        if (board.turn) move->castle = K;
-        else            move->castle = k;
-    } else if (san[4] == 'O') {
-        if (board.turn) move->castle = Q;
-        else            move->castle = q;
-    } else {
+    int fromFile = 'h' - san[0];
+    int fromRank = atoi(&san[1]) - 1;
+    int toFile = 'h' - san[2];
+    int toRank = atoi(&san[3]) - 1;
+    move->fromSquare = 8 * (fromRank) + fromFile;
+    move->toSquare = 8 * (toRank) + toFile;
+    move->castle = 0;
+    move->promotion = -1;
 
-        int fromFile = 'h' - san[0];
-        int fromRank = atoi(&san[1]) - 1;
-        int toFile = 'h' - san[2];
-        int toRank = atoi(&san[3]) - 1;
-        move->fromSquare = 8 * (fromRank) + fromFile;
-        move->toSquare = 8 * (toRank) + toFile;
-        move->castle = 0;
-        move->promotion = -1;
+    if (move->fromSquare == E1 && move->toSquare == G1 && (board.castling & K)) {
+        move->castle = K;
+    }
+    else if (move->fromSquare == E1 && move->toSquare == C1 && (board.castling & Q)) {
+        move->castle = Q;
+    }
+    else if (move->fromSquare == E8 && move->toSquare == G8 && (board.castling & k)) {
+        move->castle = k;
+    }
+    else if (move->fromSquare == E8 && move->toSquare == C8 && (board.castling & q)) {
+        move->castle = q;
+    }
 
-        if (san[4] == 'q') {
-            move->promotion = board.turn ? QUEEN_W : QUEEN_B;
-        }
-        else if (san[4] == 'r') {
-            move->promotion = board.turn ? ROOK_W : ROOK_B;
-        }
-        else if (san[4] == 'n') {
-            move->promotion = board.turn ? KNIGHT_W : KNIGHT_B;
-        }
-        else if (san[4] == 'b') {
-            move->promotion = board.turn ? BISHOP_W : BISHOP_B;
-        }
+    if (san[4] == 'q') {
+        move->promotion = board.turn ? QUEEN_W : QUEEN_B;
+    }
+    else if (san[4] == 'r') {
+        move->promotion = board.turn ? ROOK_W : ROOK_B;
+    }
+    else if (san[4] == 'n') {
+        move->promotion = board.turn ? KNIGHT_W : KNIGHT_B;
+    }
+    else if (san[4] == 'b') {
+        move->promotion = board.turn ? BISHOP_W : BISHOP_B;
     }
 }
 
@@ -651,26 +655,18 @@ void moveToSan(Move move, char san[]) {
 
         switch (move.promotion) {
             case QUEEN_W:
-                san[4] = 'Q';
-                break;
             case QUEEN_B:
                 san[4] = 'q';
                 break;
             case ROOK_W:
-                san[4] = 'R';
-                break;
             case ROOK_B:
                 san[4] = 'r';
                 break;
             case BISHOP_W:
-                san[4] = 'B';
-                break;
             case BISHOP_B:
                 san[4] = 'b';
                 break;
             case KNIGHT_W:
-                san[4] = 'N';
-                break;
             case KNIGHT_B:
                 san[4] = 'n';
                 break;

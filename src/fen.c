@@ -113,7 +113,9 @@ void setFen(Board* board, char* fen) {
         // En passant square
         } else if (spacesEncountered == 3) {
             if (enPassantRank != '0' && enPassantFile != '0') {
-                board->epSquare = ((8 - ('h' - enPassantFile)+1) * 8) - (7 - ('8' - enPassantRank));
+                int file = 'h' - enPassantFile;
+                int rank = enPassantRank - '1';
+                board->epSquare = 8 * rank + file;
             }
         }
 
