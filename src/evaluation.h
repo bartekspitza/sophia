@@ -7,5 +7,5 @@ extern int MAX_EVAL;
 extern int MIN_EVAL;
 
 void initEvaluation(void);
-int evaluate(Board board);
+int evaluate(Board board, int result);
 #endif

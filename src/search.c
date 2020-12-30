@@ -11,9 +11,12 @@ int max(int a, int b) {
 int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched) {
     *nodesSearched += 1;
 
-    int res = result(board);
+    Move moves[250];
+    int numMoves = legalMoves(board, moves);
+
+    int res = result(board, numMoves);
     if (res) {
-        int eval = evaluate(board);    
+        int eval = evaluate(board, res);
 
         if (res != DRAW) {
             eval += (1 * origDepth - depth) * (board.turn ? 1 : -1);
@@ -21,13 +24,10 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
 
         return eval * (board.turn ? 1 : -1);
     } else if (depth == 0) {
-        return evaluate(board) * (board.turn ? 1 : -1);
+        return evaluate(board, res) * (board.turn ? 1 : -1);
     }
 
     int eval = MIN_EVAL;
-    Move moves[250];
-    int numMoves = legalMoves(board, moves);
-
     for (int i = 0; i < numMoves; i++) {
         Board child = board;
         pushMove(&child, moves[i]);

@@ -99,11 +99,10 @@ void initEvaluation(void) {
     }
 }
 
-int evaluate(Board board) {
-    int res = result(board);
-    if (res == DRAW) return 0;
-    else if (res == WHITE_WIN) return MAX_EVAL;
-    else if (res == BLACK_WIN) return MIN_EVAL;
+int evaluate(Board board, int result) {
+    if (result == DRAW) return 0;
+    else if (result == WHITE_WIN) return MAX_EVAL;
+    else if (result == BLACK_WIN) return MIN_EVAL;
 
     int eval = 0;
 

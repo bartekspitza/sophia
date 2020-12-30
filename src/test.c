@@ -70,7 +70,9 @@ void gameResult_undetermined(void) {
     char* fen = "8/4bb1k/8/8/8/4K3/8/8 w - - 0 1";
     setFen(&board, fen);
 
-    int gameResult = result(board);
+    Move moves[250];
+    int length = legalMoves(board, moves);
+    int gameResult = result(board, length);
     TEST_ASSERT_EQUAL_INT16(UN_DETERMINED, gameResult);
 }
 
@@ -79,7 +81,9 @@ void gameResult_insufficientMaterial_KB(void) {
     char* fen = "8/5b1k/8/8/8/8/K7/8 w - - 0 1";
     setFen(&board, fen);
 
-    int gameResult = result(board);
+    Move moves[250];
+    int length = legalMoves(board, moves);
+    int gameResult = result(board, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 void gameResult_insufficientMaterial_KNN(void) {
@@ -87,7 +91,9 @@ void gameResult_insufficientMaterial_KNN(void) {
     char* fen = "8/4nn1k/8/8/8/8/K7/8 w - - 0 1";
     setFen(&board, fen);
 
-    int gameResult = result(board);
+    Move moves[250];
+    int length = legalMoves(board, moves);
+    int gameResult = result(board, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 
@@ -96,7 +102,9 @@ void gameResult_insufficientMaterial_KN(void) {
     char* fen = "8/5n1k/8/8/8/8/K7/8 w - - 0 1";
     setFen(&board, fen);
 
-    int gameResult = result(board);
+    Move moves[250];
+    int length = legalMoves(board, moves);
+    int gameResult = result(board, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 
@@ -105,7 +113,9 @@ void gameResult_whiteStalemate(void) {
     char* fen = "1r6/7k/8/8/8/2q5/K7/8 w - - 0 1";
     setFen(&board, fen);
 
-    int gameResult = result(board);
+    Move moves[250];
+    int length = legalMoves(board, moves);
+    int gameResult = result(board, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 
@@ -114,7 +124,9 @@ void gameResult_blackStalemate(void) {
     char* fen = "8/7k/5Q2/8/8/8/8/K5R1 b - - 0 1";
     setFen(&board, fen);
 
-    int gameResult = result(board);
+    Move moves[250];
+    int length = legalMoves(board, moves);
+    int gameResult = result(board, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 
@@ -123,7 +135,9 @@ void gameResult_blackCheckmate(void) {
     char* fen = "1r2k3/8/8/8/8/8/1q6/K7 w - - 0 1";
     setFen(&board, fen);
 
-    int gameResult = result(board);
+    Move moves[250];
+    int length = legalMoves(board, moves);
+    int gameResult = result(board, length);
     TEST_ASSERT_EQUAL_INT16(BLACK_WIN, gameResult);
 }
 
@@ -132,7 +146,9 @@ void gameResult_whiteCheckmate(void) {
     char* fen = "4k3/4Q3/8/8/8/8/8/K3R3 b - - 0 1";
     setFen(&board, fen);
 
-    int gameResult = result(board);
+    Move moves[250];
+    int length = legalMoves(board, moves);
+    int gameResult = result(board, length);
     TEST_ASSERT_EQUAL_INT16(WHITE_WIN, gameResult);
 }
 
