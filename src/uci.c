@@ -7,6 +7,7 @@
 #include "search.h"
 #include "movegen.h"
 #include "evaluation.h"
+#include "zobrist.h"
 
 void parsePosition(char *command, Board* board);
 void getBestMove(Board board);
@@ -16,8 +17,12 @@ char* AUTHOR = "Bartek Spitza";
 char* ENGINE_NAME = "Sophia";
 
 int main(void) {
+    // Init engine 
+    initZobrist();
     initMoveGeneration();
     initEvaluation();
+    // Init engine 
+
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
 
@@ -92,7 +97,7 @@ void parsePosition(char *command, Board* board) {
 }
 
 void getBestMove(Board board) {
-    int depth = 2;
+    int depth = 6;
     int nodesSearched = 0;
 
     clock_t start = clock();
