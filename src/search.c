@@ -12,7 +12,7 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
     *nodesSearched += 1;
 
     int res = result(board);
-    if (res != NOT_DETERMINED) {
+    if (res) {
         int eval = evaluate(board);    
 
         if (res != DRAW) {

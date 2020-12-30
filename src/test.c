@@ -16,16 +16,29 @@ void parseFen_pieceMasks(void);
 void parseFen_epSquare(void);
 void parseFen_kingSquares(void);
 void parseFen_castlingRights(void);
+
 void moveToSan_normal(void);
 void moveToSan_castle(void);
 void moveToSan_promotion(void);
+
 void sanToMove_normal(void);
 void sanToMove_castle(void);
 void sanToMove_promotion(void);
 
+void gameResult_blackCheckmate(void);
+void gameResult_whiteCheckmate(void);
+void gameResult_blackStalemate(void);
+void gameResult_whiteStalemate(void);
+void gameResult_insufficientMaterial_KN(void);
+void gameResult_insufficientMaterial_KNN(void);
+void gameResult_insufficientMaterial_KB(void);
+void gameResult_undetermined(void);
+
 /*-------Tests--------*/
 
 int main(void) {
+    initMoveGeneration();
+
     UNITY_BEGIN();
     RUN_TEST(parseFen_turn);
     RUN_TEST(parseFen_pieceMasks);
@@ -40,7 +53,87 @@ int main(void) {
     RUN_TEST(sanToMove_normal);
     RUN_TEST(sanToMove_castle);
     RUN_TEST(sanToMove_promotion);
+
+    RUN_TEST(gameResult_blackCheckmate);
+    RUN_TEST(gameResult_blackStalemate);
+    RUN_TEST(gameResult_whiteCheckmate);
+    RUN_TEST(gameResult_whiteStalemate);
+    RUN_TEST(gameResult_insufficientMaterial_KN);
+    RUN_TEST(gameResult_insufficientMaterial_KNN);
+    RUN_TEST(gameResult_insufficientMaterial_KB);
+    RUN_TEST(gameResult_undetermined);
     return UNITY_END();
+}
+
+void gameResult_undetermined(void) {
+    Board board;
+    char* fen = "8/4bb1k/8/8/8/4K3/8/8 w - - 0 1";
+    setFen(&board, fen);
+
+    int gameResult = result(board);
+    TEST_ASSERT_EQUAL_INT16(UN_DETERMINED, gameResult);
+}
+
+void gameResult_insufficientMaterial_KB(void) {
+    Board board;
+    char* fen = "8/5b1k/8/8/8/8/K7/8 w - - 0 1";
+    setFen(&board, fen);
+
+    int gameResult = result(board);
+    TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
+}
+void gameResult_insufficientMaterial_KNN(void) {
+    Board board;
+    char* fen = "8/4nn1k/8/8/8/8/K7/8 w - - 0 1";
+    setFen(&board, fen);
+
+    int gameResult = result(board);
+    TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
+}
+
+void gameResult_insufficientMaterial_KN(void) {
+    Board board;
+    char* fen = "8/5n1k/8/8/8/8/K7/8 w - - 0 1";
+    setFen(&board, fen);
+
+    int gameResult = result(board);
+    TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
+}
+
+void gameResult_whiteStalemate(void) {
+    Board board;
+    char* fen = "1r6/7k/8/8/8/2q5/K7/8 w - - 0 1";
+    setFen(&board, fen);
+
+    int gameResult = result(board);
+    TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
+}
+
+void gameResult_blackStalemate(void) {
+    Board board;
+    char* fen = "8/7k/5Q2/8/8/8/8/K5R1 b - - 0 1";
+    setFen(&board, fen);
+
+    int gameResult = result(board);
+    TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
+}
+
+void gameResult_blackCheckmate(void) {
+    Board board;
+    char* fen = "1r2k3/8/8/8/8/8/1q6/K7 w - - 0 1";
+    setFen(&board, fen);
+
+    int gameResult = result(board);
+    TEST_ASSERT_EQUAL_INT16(BLACK_WIN, gameResult);
+}
+
+void gameResult_whiteCheckmate(void) {
+    Board board;
+    char* fen = "4k3/4Q3/8/8/8/8/8/K3R3 b - - 0 1";
+    setFen(&board, fen);
+
+    int gameResult = result(board);
+    TEST_ASSERT_EQUAL_INT16(WHITE_WIN, gameResult);
 }
 
 void sanToMove_castle(void) {

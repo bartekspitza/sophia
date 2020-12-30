@@ -21,15 +21,48 @@ char CASTLING_RIGHTS[4][2] = { "K", "Q", "k", "q" };
 int ALL_CASTLE_W = 0b0011;
 int ALL_CASTLE_B = 0b1100;
 
-int result(Board board) {
-    Move moves[250];
-    int length = legalMoves(board, moves);
-
-    if (length == 0) {
-        return board.turn ? BLACK_WIN : WHITE_WIN;
+bool isInsufficientMaterial(Board board) {
+    if (board.pawn_W || board.pawn_B || board.rook_W || board.rook_B || board.queen_W || board.queen_B) {
+        return false;
     }
 
-    return NOT_DETERMINED;
+    int knights = 0;
+    int bishops = 0;
+    Bitboard knightsBB = board.knight_W | board.knight_B;
+    Bitboard bishopsBB = board.bishop_W | board.bishop_B;
+    while (knightsBB) {
+        bitScanForward(&knightsBB);
+        knights++;
+    }
+    while (bishopsBB) {
+        bitScanForward(&bishopsBB);
+        bishops++;
+    }
+
+    if (!bishops && knights) return true;       // KN or KNN vs K
+    if (!knights && bishops == 1) return true;  // KB vs K
+
+    return false;
+}
+
+int result(Board board) {
+    if (isInsufficientMaterial(board)) {
+        return DRAW;
+    }
+
+    Move moves[250];
+    bool noLegalMoves = legalMoves(board, moves) == 0;
+
+    if (noLegalMoves) {
+        bool kingInCheck = isSquareAttacked(board, board.turn ? board.whiteKingSq : board.blackKingSq);
+        if (kingInCheck) {
+            return board.turn ? BLACK_WIN : WHITE_WIN;
+        }
+
+        return DRAW;
+    }
+
+    return UN_DETERMINED;
 }
 
 void computeOccupancyMasks(Board* board) {
