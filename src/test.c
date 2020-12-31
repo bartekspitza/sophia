@@ -4,6 +4,7 @@
 #include "fen.h"
 #include "movegen.h"
 #include "utils.h"
+#include "san.h"
 
 void setUp(void);
 void tearDown(void);

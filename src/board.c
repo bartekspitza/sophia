@@ -75,11 +75,7 @@ void computeOccupancyMasks(Board* board) {
 }
 
 
-void pushSan(Board* board, char* san) {
-    Move move;
-    sanToMove(*board, &move, san);
-    pushMove(board, move);
-}
+
 
 void pushMove(Board* board, Move move) {
     // En passant

@@ -8,6 +8,7 @@
 #include "movegen.h"
 #include "evaluation.h"
 #include "zobrist.h"
+#include "san.h"
 
 void parsePosition(char *command, Board* board);
 void getBestMove(Board board);

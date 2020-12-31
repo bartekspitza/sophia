@@ -1,5 +1,17 @@
 #include <stdio.h>
+#include <string.h>
 #include "utils.h"
+#include "san.h"
+
+void printMoves(Move moves[], int length) {
+    printf("Moves: %d\n", length);
+    for(int i = 0;i<length;i++) {
+        char san[6];
+        moveToSan(moves[i], san);
+        printf("%s\n", san);
+        memset(san, 0, sizeof(san));
+    }
+}
 
 void printBitboard(Bitboard bb) {
     printf("\n");

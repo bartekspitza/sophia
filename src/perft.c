@@ -6,6 +6,7 @@
 #include "fen.h"
 #include "movegen.h"
 #include "search.h"
+#include "san.h"
 
 typedef unsigned long long u64;
 u64 perft(Board board, int depth, bool divide);
@@ -45,9 +46,8 @@ int main() {
     int num = legalMoves(board, moves);
 */
 
-    int depth = 5;
+    int depth = 4;
     printf("Depth %d\n\n", depth);
-
 
     int correct = 0;
     u64 totalNodes = 0;

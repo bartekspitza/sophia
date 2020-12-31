@@ -12,6 +12,5 @@ int result(Board board, int numMoves);
 void computeOccupancyMasks(Board* board);
 void printBoard(Board board);
 void pushMove(Board* board, Move move);
-void pushSan(Board* board, char* san);
 
 #endif
