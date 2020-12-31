@@ -9,22 +9,6 @@ int min(int a, int b);
 int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched);
 
 
-/*
-
-        # TT table lookup
-        entry = self.TT.get(board, piece_map)
-        if entry and entry.depth >= depth:
-            if entry.node_type == NodeType.EXACT:
-                return entry.value, entry.move
-            elif entry.node_type == NodeType.LOWER:
-                alpha = max(alpha, entry.value)
-            elif entry.node_type == NodeType.UPPER:
-                beta = min(beta, entry.value)
-            
-            if alpha >= beta:
-                return entry.value, entry.move
-                */
-
 int search(Board board, int depth, Move* move, int* nodesSearched) {
     int eval = negamax(board, move, depth, MIN_EVAL, MAX_EVAL, depth, nodesSearched);
     return eval;
@@ -77,7 +61,11 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
 
     int eval = MIN_EVAL;
     for (int i = 0; i < numMoves; i++) {
-        if (isMoveLegal(board, moves[i])) {
+        // Validate move if it hasn't
+        if (moves[i].validation == NOT_VALIDATED)
+            validateMove(board, &moves[i]);
+
+        if (moves[i].validation == LEGAL) {
             Board child = board;
             pushMove(&child, moves[i]);
 

@@ -82,14 +82,16 @@ u64 perft(Board board, int depth, bool divide) {
     int legal = 0;
 
     for (int i = 0; i < numMoves; i++) {
-      if (isMoveLegal(board, moves[i])) legal++;
+      validateMove(board, &moves[i]);
+      if (moves[i].validation == LEGAL) legal++;
     }
 
     return legal;
   }
 
   for (int i = 0; i < numMoves; i++) {
-    if (isMoveLegal(board, moves[i])) {
+    validateMove(board, &moves[i]);
+    if (moves[i].validation == LEGAL) {
       // Copy-make
       Board cpy = board;
       pushMove(&cpy, moves[i]);

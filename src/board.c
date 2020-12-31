@@ -53,7 +53,10 @@ int result(Board board, Move pseudoLegal[], int length) {
     bool noLegalMoves = true;
 
     for (int i = 0; i < length;i++) {
-        if (isMoveLegal(board, pseudoLegal[i])) {
+        if (pseudoLegal[i].validation == NOT_VALIDATED) 
+            validateMove(board, &(pseudoLegal[i]));
+
+        if (pseudoLegal[i].validation == LEGAL) {
             noLegalMoves = false;
             break;
         }

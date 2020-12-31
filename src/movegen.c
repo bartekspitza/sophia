@@ -362,29 +362,36 @@ Visible methods
 
 ---------------------------------------------*/
 
-bool isMoveLegal(Board board, Move move) {
-    if (move.castle) {
+void validateMove(Board board, Move* move) {
+    if (move->castle) {
         // Is king in check?
         bool isInCheck = isSquareAttacked(board, board.turn ? board.whiteKingSq : board.blackKingSq);
-        if (isInCheck) return false;
+        if (isInCheck) {
+            move->validation = ILLEGAL;
+            return;
+        }
 
         // Does king travel over attacked squares?
         int sq;
-        if (move.castle == K) sq = F1;
-        if (move.castle == Q) sq = D1;
-        if (move.castle == k) sq = F8;
-        if (move.castle == q) sq = D8;
+        if (move->castle == K) sq = F1;
+        if (move->castle == Q) sq = D1;
+        if (move->castle == k) sq = F8;
+        if (move->castle == q) sq = D8;
         bool attackedTravel = isSquareAttacked(board, sq);
-        if (attackedTravel) return false;
+        if (attackedTravel) {
+            move->validation = ILLEGAL;
+            return;
+        }
     }
 
     Board cpy = board;
-    pushMove(&cpy, move);
+    pushMove(&cpy, *move);
 
     int kingSquare = cpy.turn ? cpy.blackKingSq : cpy.whiteKingSq;
     cpy.turn ^= 1;
+    bool isInCheckAfterMove = isSquareAttacked(cpy, kingSquare);
 
-    return ! isSquareAttacked(cpy, kingSquare);
+    move->validation = isInCheckAfterMove ? ILLEGAL : LEGAL;
 }
 
 void initMoveGeneration(void) {
@@ -510,7 +517,6 @@ int pseudoLegalMoves(Board board, Move moves[]) {
     while (kingMovesMask) {
         int sq = bitScanForward(&kingMovesMask);
         Move move = getMove(kingSquare, sq, NO_PROMOTION, NOT_CASTLE);
-        isMoveLegal(board, move);
         addMove(board, move, moves, &length);
     }
     while (bishopBitboard) {
