@@ -303,15 +303,7 @@ Bitboard getRookAttacks(int square, Bitboard occupancy) {
 	return ROOK_ATTACKS[square][occupancy];
 }
 
-bool isMoveLegal(Board board, Move move) {
-    Board cpy = board;
-    pushMove(&cpy, move);
 
-    int kingSquare = cpy.turn ? cpy.blackKingSq : cpy.whiteKingSq;
-    cpy.turn ^= 1;
-
-    return ! isSquareAttacked(cpy, kingSquare);
-}
 
 void addMove(Board board, Move move, Move moves[], int* indx) {
     moves[*indx] = move;
@@ -369,6 +361,31 @@ void addPawnAdvanceWithPossiblePromos(Board board, bool isPromoting, int turn, i
 Visible methods
 
 ---------------------------------------------*/
+
+bool isMoveLegal(Board board, Move move) {
+    if (move.castle) {
+        // Is king in check?
+        bool isInCheck = isSquareAttacked(board, board.turn ? board.whiteKingSq : board.blackKingSq);
+        if (isInCheck) return false;
+
+        // Does king travel over attacked squares?
+        int sq;
+        if (move.castle == K) sq = F1;
+        if (move.castle == Q) sq = D1;
+        if (move.castle == k) sq = F8;
+        if (move.castle == q) sq = D8;
+        bool attackedTravel = isSquareAttacked(board, sq);
+        if (attackedTravel) return false;
+    }
+
+    Board cpy = board;
+    pushMove(&cpy, move);
+
+    int kingSquare = cpy.turn ? cpy.blackKingSq : cpy.whiteKingSq;
+    cpy.turn ^= 1;
+
+    return ! isSquareAttacked(cpy, kingSquare);
+}
 
 void initMoveGeneration(void) {
     initKnightMovementTable();
@@ -547,46 +564,31 @@ int pseudoLegalMoves(Board board, Move moves[]) {
     // Castling
     if (board.turn) {
         if (board.castling & K) {
-            bool isNotInCheck = ! isSquareAttacked(board, E1);
             bool pathClear = (board.occupancy & WHITE_CASTLE_K_PATH) == 0;
-            bool noAttacks = ! isSquareAttacked(board, F1);
-            pathClear = pathClear && noAttacks;
-
-            if (isNotInCheck && pathClear) {
+            if (pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, K);
                 addMove(board, move, moves, &length);
             }
         }
         if (board.castling & Q) {
-            bool isNotInCheck = ! isSquareAttacked(board, E1);
             bool pathClear = (board.occupancy & WHITE_CASTLE_Q_PATH) == 0;
-            bool noAttacks = ! isSquareAttacked(board, D1);
-            pathClear = pathClear && noAttacks;
-
-            if (isNotInCheck && pathClear) {
+            if (pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, Q);
                 addMove(board, move, moves, &length);
             }
         }
     } else {
         if (board.castling & k) {
-            bool isNotInCheck = ! isSquareAttacked(board, E8);
             bool pathClear = (board.occupancy & BLACK_CASTLE_K_PATH) == 0;
-            bool noAttacks = ! isSquareAttacked(board, F8);
-            pathClear = pathClear && noAttacks;
-
-            if (isNotInCheck && pathClear) {
+            if (pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, k);
                 addMove(board, move, moves, &length);
             }
         }
         if (board.castling & q) {
-            bool isNotInCheck = ! isSquareAttacked(board, E8);
             bool pathClear = (board.occupancy & BLACK_CASTLE_Q_PATH) == 0;
-            bool noAttacks = ! isSquareAttacked(board, D8);
-            pathClear = pathClear && noAttacks;
 
-            if (isNotInCheck && pathClear) {
+            if (pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, q);
                 addMove(board, move, moves, &length);
             }
