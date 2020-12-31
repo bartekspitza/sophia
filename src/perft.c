@@ -42,6 +42,7 @@ int main() {
 
 
     int correct = 0;
+    u64 totalNodes = 0;
     clock_t start = clock();
     for (int i = 0; i < NUM_FENS;i++) {
       char* fen = FENS[i];
@@ -50,6 +51,7 @@ int main() {
       setFen(&board, fen);
 
       u64 nodes = perft(board, depth, true);
+      totalNodes += nodes;
       u64 expected = EXPECTED_RESULTS[i][depth-1];
       bool matches = nodes == expected;
       correct += matches ? 1 : 0;
@@ -63,9 +65,11 @@ int main() {
 
     // Print elapsed time
     clock_t end = clock();
-    double time_spent = (double) (end - start) / CLOCKS_PER_SEC;
+    double timeSpent = (double) (end - start) / CLOCKS_PER_SEC;
+    double knps = (totalNodes / 1000) / timeSpent;
     printf("\n%d/%d", correct, NUM_FENS);
-    printf("\nDone in: %.2fs\n", time_spent);
+    printf("\nDone in: %.2fs\n", timeSpent);
+    printf("%.2f knps\n", knps);
 
     return 0;
 }
