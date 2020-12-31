@@ -364,13 +364,6 @@ Visible methods
 
 void validateMove(Board board, Move* move) {
     if (move->castle) {
-        // Is king in check?
-        bool isInCheck = isSquareAttacked(board, board.turn ? board.whiteKingSq : board.blackKingSq);
-        if (isInCheck) {
-            move->validation = ILLEGAL;
-            return;
-        }
-
         // Does king travel over attacked squares?
         int sq;
         if (move->castle == K) sq = F1;
@@ -379,6 +372,13 @@ void validateMove(Board board, Move* move) {
         if (move->castle == q) sq = D8;
         bool attackedTravel = isSquareAttacked(board, sq);
         if (attackedTravel) {
+            move->validation = ILLEGAL;
+            return;
+        }
+
+        // Is king in check?
+        bool isInCheck = isSquareAttacked(board, board.turn ? board.whiteKingSq : board.blackKingSq);
+        if (isInCheck) {
             move->validation = ILLEGAL;
             return;
         }
