@@ -33,10 +33,10 @@ typedef struct {
 } Board;
 
 typedef struct {
-    int fromSquare;
-    int toSquare;
-    int promotion;
-    int castle;
+    char fromSquare;
+    char toSquare;
+    char promotion;
+    char castle;
     char validation;
 } Move;
 
