@@ -37,7 +37,15 @@ u64 EXPECTED_RESULTS[][6] = {
 int main() {
     initMoveGeneration();
 
-    int depth = 4;
+/*
+    Board board;
+    setFen(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB1R w KQkq - 0 1");
+
+    Move moves[250];
+    int num = legalMoves(board, moves);
+*/
+
+    int depth = 5;
     printf("Depth %d\n\n", depth);
 
 
@@ -50,17 +58,17 @@ int main() {
       Board board;
       setFen(&board, fen);
 
-      u64 nodes = perft(board, depth, true);
+      u64 nodes = perft(board, depth, false);
       totalNodes += nodes;
       u64 expected = EXPECTED_RESULTS[i][depth-1];
       bool matches = nodes == expected;
       correct += matches ? 1 : 0;
 
-      printf(matches ? 
-      "Success: " : 
-      "Fail:    ");
+      //printf(matches ? 
+    // "Success: " : 
+      //"Fail:    ");
 
-      printf("%llu/%llu %s\n", nodes, expected, fen);
+      //printf("%llu/%llu %s\n", nodes, expected, fen);
     }
 
     // Print elapsed time

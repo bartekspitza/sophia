@@ -4,6 +4,7 @@
 #include <string.h>
 #include "movegen.h"
 #include "board.h"
+#include "utils.h"
 
 #define getMove(from, to, promo, castling) {.fromSquare=from, .toSquare=to, .promotion=promo, .castle=castling}
 
@@ -423,6 +424,11 @@ bool isSquareAttacked(Board board, int square) {
     return false;
 }
 
+Bitboard WHITE_CASTLE_K_PATH = 0b110;
+Bitboard WHITE_CASTLE_Q_PATH = 0b1110000;
+Bitboard BLACK_CASTLE_K_PATH = 0b11LL << G8;
+Bitboard BLACK_CASTLE_Q_PATH = 0b111LL << D8;
+
 int legalMoves(Board board, Move moves[]) {
     int length = 0;
 
@@ -545,7 +551,7 @@ int legalMoves(Board board, Move moves[]) {
     if (board.turn) {
         if (board.castling & K) {
             bool isNotInCheck = ! isSquareAttacked(board, E1);
-            bool pathClear = getBit(board.occupancy, F1) == 0 && getBit(board.occupancy, G1) == 0;
+            bool pathClear = (board.occupancy & WHITE_CASTLE_K_PATH) == 0;
             bool noAttacks = ! isSquareAttacked(board, F1);
             pathClear = pathClear && noAttacks;
 
@@ -556,7 +562,7 @@ int legalMoves(Board board, Move moves[]) {
         }
         if (board.castling & Q) {
             bool isNotInCheck = ! isSquareAttacked(board, E1);
-            bool pathClear = getBit(board.occupancy, B1) == 0 && getBit(board.occupancy, C1) == 0 && getBit(board.occupancy, D1) == 0;
+            bool pathClear = (board.occupancy & WHITE_CASTLE_Q_PATH) == 0;
             bool noAttacks = ! isSquareAttacked(board, D1);
             pathClear = pathClear && noAttacks;
 
@@ -568,7 +574,7 @@ int legalMoves(Board board, Move moves[]) {
     } else {
         if (board.castling & k) {
             bool isNotInCheck = ! isSquareAttacked(board, E8);
-            bool pathClear = getBit(board.occupancy, F8) == 0 && getBit(board.occupancy, G8) == 0;
+            bool pathClear = (board.occupancy & BLACK_CASTLE_K_PATH) == 0;
             bool noAttacks = ! isSquareAttacked(board, F8);
             pathClear = pathClear && noAttacks;
 
@@ -579,7 +585,7 @@ int legalMoves(Board board, Move moves[]) {
         }
         if (board.castling & q) {
             bool isNotInCheck = ! isSquareAttacked(board, E8);
-            bool pathClear = getBit(board.occupancy, B8) == 0 && getBit(board.occupancy, C8) == 0 && getBit(board.occupancy, D8) == 0;
+            bool pathClear = (board.occupancy & BLACK_CASTLE_Q_PATH) == 0;
             bool noAttacks = ! isSquareAttacked(board, D8);
             pathClear = pathClear && noAttacks;
 

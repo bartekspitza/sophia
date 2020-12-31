@@ -7,7 +7,7 @@ void printBitboard(Bitboard bb) {
         for (int x = 0; x < 8; x++) {
 
             int loc = 63 - ((y*8) + x);
-            int bit = bb & (1ULL << loc);
+            Bitboard bit = bb & (1LL << loc);
 
             if (bit) {
                 putchar('x');
@@ -24,7 +24,7 @@ void printBitboard(Bitboard bb) {
 
 void printBits(Bitboard bb) {
     for (int i = 0; i < 64; i++) {
-        int bit = bb & (1ULL << (63 - i));
+        Bitboard bit = bb & (1LL << (63 - i));
         printf(bit ? "1" : "0");
     }
     printf("\n");
