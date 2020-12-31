@@ -9,6 +9,6 @@ perft: perft.c
 	@rm perft
 
 test: test.c
-	@gcc test.c -o test evaluation.c search.c board.c fen.c utils.c movegen.c magics.c -L../libs/unity -lunity
+	@gcc test.c -o test evaluation.c board.c fen.c utils.c movegen.c magics.c -L../libs/unity -lunity
 	@./test
 	@rm test
