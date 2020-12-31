@@ -38,15 +38,7 @@ u64 EXPECTED_RESULTS[][6] = {
 int main() {
     initMoveGeneration();
 
-/*
-    Board board;
-    setFen(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB1R w KQkq - 0 1");
-
-    Move moves[250];
-    int num = legalMoves(board, moves);
-*/
-
-    int depth = 4;
+    int depth = 5;
     printf("Depth %d\n\n", depth);
 
     int correct = 0;
@@ -64,14 +56,13 @@ int main() {
       bool matches = nodes == expected;
       correct += matches ? 1 : 0;
 
-      //printf(matches ? 
-    // "Success: " : 
-      //"Fail:    ");
+      printf(matches ? 
+      "Success: " : 
+      "Fail:    ");
 
-      //printf("%llu/%llu %s\n", nodes, expected, fen);
+      printf("%llu/%llu %s\n", nodes, expected, fen);
     }
 
-    // Print elapsed time
     clock_t end = clock();
     double timeSpent = (double) (end - start) / CLOCKS_PER_SEC;
     double knps = (totalNodes / 1000) / timeSpent;
@@ -85,25 +76,33 @@ int main() {
 u64 perft(Board board, int depth, bool divide) {
   u64 nodes = 0;
   Move moves[256];
-  int numMoves = legalMoves(board, moves);
+  int numMoves = pseudoLegalMoves(board, moves);
 
-  if (depth == 1) 
-    return numMoves;
+  if (depth == 1)  {
+    int legal = 0;
+
+    for (int i = 0; i < numMoves; i++) {
+      if (isMoveLegal(board, moves[i])) legal++;
+    }
+
+    return legal;
+  }
 
   for (int i = 0; i < numMoves; i++) {
+    if (isMoveLegal(board, moves[i])) {
+      // Copy-make
+      Board cpy = board;
+      pushMove(&cpy, moves[i]);
 
-    // Copy-make
-    Board cpy = board;
-    pushMove(&cpy, moves[i]);
-
-    u64 count = perft(cpy, depth-1, false);
-    if (divide) {
-      char san[6];
-      memset(&san, 0, sizeof(san));
-      moveToSan(moves[i], san);
-      printf("%s: %llu\n", san, count);
+      u64 count = perft(cpy, depth-1, false);
+      if (divide) {
+        char san[6];
+        memset(&san, 0, sizeof(san));
+        moveToSan(moves[i], san);
+        printf("%s: %llu\n", san, count);
+      }
+      nodes += count;
     }
-    nodes += count;
   }
 
   return nodes;

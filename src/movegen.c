@@ -314,10 +314,8 @@ bool isMoveLegal(Board board, Move move) {
 }
 
 void addMove(Board board, Move move, Move moves[], int* indx) {
-    if (isMoveLegal(board, move)) {
-        moves[*indx] = move;
-        *indx += 1;
-    }
+    moves[*indx] = move;
+    *indx += 1;
 }
 
 Bitboard getKingMask(Board board) {
@@ -428,7 +426,7 @@ bool isSquareAttacked(Board board, int square) {
     return false;
 }
 
-int legalMoves(Board board, Move moves[]) {
+int pseudoLegalMoves(Board board, Move moves[]) {
     int length = 0;
 
     // Color relative variables

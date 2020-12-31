@@ -59,10 +59,10 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
         }
     }
 
-    Move moves[250];
-    int numMoves = legalMoves(board, moves);
+    Move moves[256];
+    int numMoves = pseudoLegalMoves(board, moves);
 
-    int res = result(board, numMoves);
+    int res = result(board, moves, numMoves);
     if (res) {
         int eval = evaluate(board, res);
 
@@ -77,22 +77,24 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
 
     int eval = MIN_EVAL;
     for (int i = 0; i < numMoves; i++) {
-        Board child = board;
-        pushMove(&child, moves[i]);
+        if (isMoveLegal(board, moves[i])) {
+            Board child = board;
+            pushMove(&child, moves[i]);
 
-        int childEval = -negamax(child, move, depth-1, -beta, -alpha, origDepth, nodesSearched);
+            int childEval = -negamax(child, move, depth-1, -beta, -alpha, origDepth, nodesSearched);
 
-        if (childEval > eval) {
-            eval = childEval;
+            if (childEval > eval) {
+                eval = childEval;
 
-            if (depth == origDepth) {
-                *move = moves[i];
+                if (depth == origDepth) {
+                    *move = moves[i];
+                }
             }
-        }
 
-        alpha = max(alpha, childEval);
-        if (alpha >= beta) {
-            break;
+            alpha = max(alpha, childEval);
+            if (alpha >= beta) {
+                break;
+            }
         }
     }
 

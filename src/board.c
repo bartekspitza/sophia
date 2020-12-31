@@ -45,12 +45,19 @@ bool isInsufficientMaterial(Board board) {
     return false;
 }
 
-int result(Board board, int numMoves) {
+int result(Board board, Move pseudoLegal[], int length) {
     if (isInsufficientMaterial(board)) {
         return DRAW;
     }
 
-    bool noLegalMoves = numMoves == 0;
+    bool noLegalMoves = true;
+
+    for (int i = 0; i < length;i++) {
+        if (isMoveLegal(board, pseudoLegal[i])) {
+            noLegalMoves = false;
+            break;
+        }
+    }
 
     if (noLegalMoves) {
         bool kingInCheck = isSquareAttacked(board, board.turn ? board.whiteKingSq : board.blackKingSq);

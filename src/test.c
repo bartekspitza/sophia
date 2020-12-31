@@ -71,8 +71,8 @@ void gameResult_undetermined(void) {
     setFen(&board, fen);
 
     Move moves[250];
-    int length = legalMoves(board, moves);
-    int gameResult = result(board, length);
+    int length = pseudoLegalMoves(board, moves);
+    int gameResult = result(board, moves, length);
     TEST_ASSERT_EQUAL_INT16(UN_DETERMINED, gameResult);
 }
 
@@ -82,8 +82,8 @@ void gameResult_insufficientMaterial_KB(void) {
     setFen(&board, fen);
 
     Move moves[250];
-    int length = legalMoves(board, moves);
-    int gameResult = result(board, length);
+    int length = pseudoLegalMoves(board, moves);
+    int gameResult = result(board, moves, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 void gameResult_insufficientMaterial_KNN(void) {
@@ -92,8 +92,8 @@ void gameResult_insufficientMaterial_KNN(void) {
     setFen(&board, fen);
 
     Move moves[250];
-    int length = legalMoves(board, moves);
-    int gameResult = result(board, length);
+    int length = pseudoLegalMoves(board, moves);
+    int gameResult = result(board, moves, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 
@@ -103,8 +103,8 @@ void gameResult_insufficientMaterial_KN(void) {
     setFen(&board, fen);
 
     Move moves[250];
-    int length = legalMoves(board, moves);
-    int gameResult = result(board, length);
+    int length = pseudoLegalMoves(board, moves);
+    int gameResult = result(board, moves, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 
@@ -114,8 +114,8 @@ void gameResult_whiteStalemate(void) {
     setFen(&board, fen);
 
     Move moves[250];
-    int length = legalMoves(board, moves);
-    int gameResult = result(board, length);
+    int length = pseudoLegalMoves(board, moves);
+    int gameResult = result(board, moves, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 
@@ -125,8 +125,8 @@ void gameResult_blackStalemate(void) {
     setFen(&board, fen);
 
     Move moves[250];
-    int length = legalMoves(board, moves);
-    int gameResult = result(board, length);
+    int length = pseudoLegalMoves(board, moves);
+    int gameResult = result(board, moves, length);
     TEST_ASSERT_EQUAL_INT16(DRAW, gameResult);
 }
 
@@ -136,8 +136,8 @@ void gameResult_blackCheckmate(void) {
     setFen(&board, fen);
 
     Move moves[250];
-    int length = legalMoves(board, moves);
-    int gameResult = result(board, length);
+    int length = pseudoLegalMoves(board, moves);
+    int gameResult = result(board, moves, length);
     TEST_ASSERT_EQUAL_INT16(BLACK_WIN, gameResult);
 }
 
@@ -147,8 +147,8 @@ void gameResult_whiteCheckmate(void) {
     setFen(&board, fen);
 
     Move moves[250];
-    int length = legalMoves(board, moves);
-    int gameResult = result(board, length);
+    int length = pseudoLegalMoves(board, moves);
+    int gameResult = result(board, moves, length);
     TEST_ASSERT_EQUAL_INT16(WHITE_WIN, gameResult);
 }
 
