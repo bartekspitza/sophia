@@ -168,5 +168,9 @@ int evaluate(Board board, int result) {
         board.queen_B &= board.queen_B -1 ;
     }
 
+    // King square bonuses
+    eval += KING_W_PST[board.whiteKingSq];
+    eval -= KING_B_PST[board.blackKingSq];
+
     return eval;
 }
