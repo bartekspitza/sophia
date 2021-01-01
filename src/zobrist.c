@@ -21,8 +21,9 @@ Bitboard hash(Board board) {
         Bitboard bb = *(&(board.pawn_W)+i);
 
         while (bb) {
-            int square = bitScanForward(&bb);
+            int square = __builtin_ctzll(bb);
             hash ^= PIECES[i][square];
+            bb &= bb -1;
         }
     }
 

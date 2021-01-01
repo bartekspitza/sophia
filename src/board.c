@@ -31,11 +31,11 @@ bool isInsufficientMaterial(Board board) {
     Bitboard knightsBB = board.knight_W | board.knight_B;
     Bitboard bishopsBB = board.bishop_W | board.bishop_B;
     while (knightsBB) {
-        bitScanForward(&knightsBB);
+        knightsBB &= knightsBB - 1;
         knights++;
     }
     while (bishopsBB) {
-        bitScanForward(&bishopsBB);
+        bishopsBB &= bishopsBB - 1;
         bishops++;
     }
 

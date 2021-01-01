@@ -122,6 +122,8 @@ Magic bitboard methods
 
 ---------------------------------------------*/
 
+
+/*
 int bitScanForward(Bitboard* bb) {
     Bitboard tmp = *bb & -(*bb);
     int indx = __builtin_ctzl(*bb);
@@ -129,6 +131,7 @@ int bitScanForward(Bitboard* bb) {
 
     return indx;
 }
+*/
 
 int countBits(Bitboard bitboard) {
   int count = 0;
@@ -411,28 +414,33 @@ bool isSquareAttacked(Board board, int square) {
     Bitboard queen = board.turn ? board.queen_B : board.queen_W;
 
     while (queen) {
-        int sq = bitScanForward(&queen);
+        int sq = __builtin_ctzl(queen);
 
         Bitboard attacks = getBishopAttacks(sq, board.occupancy);
         attacks |= getRookAttacks(sq, board.occupancy);
         if (attacks & sqBb) return true;
+
+        queen &= queen - 1;
     }
     while (bishop) {
-        int sq = bitScanForward(&bishop);
+        int sq = __builtin_ctzl(bishop);
         Bitboard attacks = getBishopAttacks(sq, board.occupancy);
         if (attacks & sqBb) return true;
+        bishop &= bishop - 1;
     }
     while (rook) {
-        int sq = bitScanForward(&rook);
+        int sq = __builtin_ctzl(rook);
         Bitboard attacks = getRookAttacks(sq, board.occupancy);
         if (attacks & sqBb) return true;
+        rook &= rook - 1;
     }
     while (knight) {
-        int sq = bitScanForward(&knight);
+        int sq = __builtin_ctzl(knight);
         if (KNIGHT_MOVEMENT[sq] & sqBb) return true;
+        knight &= knight - 1;
     }
     while (pawn) {
-        int sq = bitScanForward(&pawn);
+        int sq = __builtin_ctzl(pawn);
 
         if (board.turn) {
             if (PAWN_B_ATTACKS_EAST[sq] & sqBb) return true;
@@ -441,10 +449,12 @@ bool isSquareAttacked(Board board, int square) {
             if (PAWN_W_ATTACKS_EAST[sq] & sqBb) return true;
             if (PAWN_W_ATTACKS_WEST[sq] & sqBb) return true;
         }
+        pawn &= pawn - 1;
     }
     while (king) {
-        int sq = bitScanForward(&king);
+        int sq = __builtin_ctzll(king);
         if (KING_MOVEMENT[sq] & sqBb) return true;
+        king &= king - 1;
     }
 
     return false;
@@ -471,7 +481,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
 
     // Pawn attacks
     while (pawnMask) {
-        int sq = bitScanForward(&pawnMask);
+        int sq = __builtin_ctzll(pawnMask);
         bool isPromoting = board.turn ? (sq >= H7 && sq <= A7) : (sq >= H2 && sq <= A2);
         if (board.turn) {
             // Pawn east attack
@@ -498,73 +508,85 @@ int pseudoLegalMoves(Board board, Move moves[]) {
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
         }
+        pawnMask &= pawnMask - 1;
     }
 
     while (singlePush) {
-        int sq = bitScanForward(&singlePush);
+        int sq = __builtin_ctzll(singlePush);
         int fromSquare = board.turn ? sq-8 : sq+8;
         bool isPromoting = board.turn ? (fromSquare >= H7 && fromSquare <= A7) : (fromSquare >= H2 && fromSquare <= A2);
         addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, sq, moves, &length);
+        singlePush &= singlePush - 1;
     }
 
     while (doublePush) {
-        int sq = bitScanForward(&doublePush);
+        int sq = __builtin_ctzll(doublePush);
         int fromSquare = board.turn ? sq-8*2 : sq+8*2;
         Move move = getMove(fromSquare, sq, NO_PROMOTION, NOT_CASTLE);
         addMove(board, move, moves, &length);
+        doublePush &= doublePush - 1;
     }
 
     while (kingMovesMask) {
-        int sq = bitScanForward(&kingMovesMask);
+        int sq = __builtin_ctzll(kingMovesMask);
         Move move = getMove(kingSquare, sq, NO_PROMOTION, NOT_CASTLE);
         addMove(board, move, moves, &length);
+        kingMovesMask &= kingMovesMask - 1;
     }
     while (bishopBitboard) {
-        int sq = bitScanForward(&bishopBitboard);
+        int sq = __builtin_ctzll(bishopBitboard);
         Bitboard target = getBishopAttacks(sq, board.occupancy);
         target ^= target & friendlyOccupancy;
 
         while (target) {
-            int indx = bitScanForward(&target);
+            int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE);
             addMove(board, move, moves, &length);
+            target &= target - 1;
         }
+        bishopBitboard &= bishopBitboard - 1;
     }
     while (rookBitboard) {
-        int sq = bitScanForward(&rookBitboard);
-            Bitboard target = getRookAttacks(sq, board.occupancy);
-            target ^= target & friendlyOccupancy;
+        int sq = __builtin_ctzll(rookBitboard);
+        Bitboard target = getRookAttacks(sq, board.occupancy);
+        target ^= target & friendlyOccupancy;
 
-            while (target) {
-                int indx = bitScanForward(&target);
-                Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE);
-                addMove(board, move, moves, &length);
-            }
- 
+        while (target) {
+            int indx = __builtin_ctzll(target);
+            Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE);
+            addMove(board, move, moves, &length);
+            target &= target - 1;
+        }
+
+        rookBitboard &= rookBitboard - 1;
     }
     while (queenBitboard) {
-        int sq = bitScanForward(&queenBitboard);
+        int sq = __builtin_ctzll(queenBitboard);
         Bitboard rookAttacks = getRookAttacks(sq, board.occupancy);
         Bitboard bishopAttacks = getBishopAttacks(sq, board.occupancy);
         Bitboard target = bishopAttacks | rookAttacks;
         target ^= target & friendlyOccupancy;
 
         while (target) {
-            int indx = bitScanForward(&target);
+            int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE);
             addMove(board, move, moves, &length);
+            target &= target - 1;
         }
+        queenBitboard &= queenBitboard - 1;
 
     }
     while (knightBitboard) {
-        int sq = bitScanForward(&knightBitboard);
+        int sq = __builtin_ctzll(knightBitboard);
         Bitboard target = KNIGHT_MOVEMENT[sq] ^ (KNIGHT_MOVEMENT[sq] & friendlyOccupancy);
 
         while (target) {
-            int indx = bitScanForward(&target);
+            int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE);
             addMove(board, move, moves, &length);
+            target &= target - 1;
         }
+        knightBitboard &= knightBitboard - 1;
     }
 
     // Castling

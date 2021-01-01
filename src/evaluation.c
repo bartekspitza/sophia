@@ -1,5 +1,4 @@
 #include "evaluation.h"
-#include "movegen.h"
 #include "board.h"
 
 int PIECE_VALUES[] = {
@@ -107,44 +106,44 @@ int evaluate(Board board, int result) {
     int eval = 0;
 
     while (board.pawn_W) {
-        int indx = bitScanForward(&board.pawn_W);
         eval += PIECE_VALUES[PAWN_W];
+        board.pawn_W &= board.pawn_W -1 ;
     }
     while (board.knight_W) {
-        int indx = bitScanForward(&board.knight_W);
         eval += PIECE_VALUES[KNIGHT_W];
+        board.knight_W &= board.knight_W -1 ;
     }
     while (board.bishop_W) {
-        int indx = bitScanForward(&board.bishop_W);
         eval += PIECE_VALUES[BISHOP_W];
+        board.bishop_W &= board.bishop_W -1 ;
     }
     while (board.rook_W) {
-        int indx = bitScanForward(&board.rook_W);
         eval += PIECE_VALUES[ROOK_W];
+        board.rook_W &= board.rook_W -1 ;
     }
     while (board.queen_W) {
-        int indx = bitScanForward(&board.queen_W);
         eval += PIECE_VALUES[QUEEN_W];
+        board.queen_W &= board.queen_W -1 ;
     }
     while (board.pawn_B) {
-        int indx = bitScanForward(&board.pawn_B);
         eval += PIECE_VALUES[PAWN_B];
+        board.pawn_B &= board.pawn_B -1 ;
     }
     while (board.knight_B) {
-        int indx = bitScanForward(&board.knight_B);
         eval += PIECE_VALUES[KNIGHT_B];
+        board.knight_B &= board.knight_B -1 ;
     }
     while (board.bishop_B) {
-        int indx = bitScanForward(&board.bishop_B);
         eval += PIECE_VALUES[BISHOP_B];
+        board.bishop_B &= board.bishop_B -1 ;
     }
     while (board.rook_B) {
-        int indx = bitScanForward(&board.rook_B);
         eval += PIECE_VALUES[ROOK_B];
+        board.rook_B &= board.rook_B -1 ;
     }
     while (board.queen_B) {
-        int indx = bitScanForward(&board.queen_B);
         eval += PIECE_VALUES[QUEEN_B];
+        board.queen_B &= board.queen_B -1 ;
     }
 
     return eval;
