@@ -3,6 +3,12 @@
 
 #include "typedefs.h"
 
-int search(Board board, int depth, Move* move, int* nodesSearched);
+typedef struct {
+    int length;
+    Move moves[15];  
+} PVline;
+
+
+int search(Board board, int depth, Move* move, int* nodesSearched, PVline* pv);
 
 #endif

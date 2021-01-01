@@ -3,20 +3,24 @@
 #include "board.h"
 #include "movegen.h"
 #include "tt.h"
+#include <string.h>
 
 int max(int a, int b);
 int min(int a, int b);
-int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched);
+int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched, PVline* pline);
 
 
-int search(Board board, int depth, Move* move, int* nodesSearched) {
-    int eval = negamax(board, move, depth, MIN_EVAL, MAX_EVAL, depth, nodesSearched);
+int search(Board board, int depth, Move* move, int* nodesSearched, PVline* pv) {
+    int eval = negamax(board, move, depth, MIN_EVAL, MAX_EVAL, depth, nodesSearched, pv);
     return eval;
 }
 
-int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched) {
+
+int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched, PVline* pline) {
     *nodesSearched += 1;
     int origAlpha = alpha;
+
+    PVline line;
 
     // TT table lookup
     Bitboard zobrist;
@@ -54,8 +58,10 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
             eval += (1 * origDepth - depth) * (board.turn ? 1 : -1);
         }
 
+        pline->length = 0;
         return eval * (board.turn ? 1 : -1);
     } else if (depth == 0) {
+        pline->length = 0;
         return evaluate(board, res) * (board.turn ? 1 : -1);
     }
 
@@ -69,7 +75,7 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
             Board child = board;
             pushMove(&child, moves[i]);
 
-            int childEval = -negamax(child, move, depth-1, -beta, -alpha, origDepth, nodesSearched);
+            int childEval = -negamax(child, move, depth-1, -beta, -alpha, origDepth, nodesSearched, &line);
 
             if (childEval > eval) {
                 eval = childEval;
@@ -79,7 +85,15 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
                 }
             }
 
-            alpha = max(alpha, childEval);
+            if (childEval > alpha) {
+                alpha = childEval;
+
+                // Store the PV line
+                pline->moves[0] = moves[i];
+                memcpy(pline->moves + 1, line.moves, line.length * sizeof(Move));
+                pline->length = line.length + 1;
+            }
+
             if (alpha >= beta) {
                 break;
             }
