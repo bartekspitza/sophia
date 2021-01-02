@@ -33,11 +33,12 @@ typedef struct {
 } Board;
 
 typedef struct {
-    char fromSquare;
-    char toSquare;
-    char promotion;
-    char castle;
-    char validation;
+    int fromSquare;
+    int toSquare;
+    int promotion;
+    int castle;
+    int validation;
+    int pieceType;
 } Move;
 
 enum PIECES {

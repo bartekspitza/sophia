@@ -5,6 +5,8 @@
 #include "board.h"
 #include "movegen.h"
 
+#define TWO_RANKS 16
+
 char SQUARE_NAMES[64][3] = {
     "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1",
     "h2", "g2", "f2", "e2", "d2", "c2", "b2", "a2",
@@ -75,120 +77,125 @@ int result(Board board, Move pseudoLegal[], int length) {
 }
 
 void computeOccupancyMasks(Board* board) {
-    board->occupancyWhite = 0;
-    board->occupancyBlack = 0;
-    for (int i = 0; i < 6;i++) {
-        board->occupancyWhite |= *(&(board->pawn_W)+i);
-        board->occupancyBlack |= *(&(board->pawn_B)+i);
-    }
+    board->occupancyWhite = board->pawn_W | board->knight_W | board->bishop_W | board->rook_W | board->queen_W | board->king_W;
+    board->occupancyBlack = board->pawn_B | board->knight_B | board->bishop_B | board->rook_B | board->queen_B | board->king_B;
     board->occupancy = board->occupancyBlack | board->occupancyWhite;
 }
 
+void makeEnPassantMove(Board* board, Move move) {
+    int capturedSquare = board->epSquare + (board->turn ? -8 : 8);
 
+    Bitboard* friendlyPawns = board->turn ? &(board->pawn_W) : &(board->pawn_B);
+    Bitboard* opponentPawns = board->turn ? &(board->pawn_B) : &(board->pawn_W);
 
+    // Capture the pawn
+    *opponentPawns = toggleBit(*opponentPawns, capturedSquare);
+
+    // Move the pawn that takes
+    *friendlyPawns = toggleBit(*friendlyPawns, move.fromSquare);
+    *friendlyPawns = setBit(*friendlyPawns, board->epSquare);
+
+    board->epSquare = -1;
+}
+
+void makeCastleMove(Board* board, Move move) {
+    if (move.castle == K) {
+        board->king_W = board->king_W >> 2;
+        board->rook_W = toggleBit(board->rook_W, H1);
+        board->rook_W = setBit(board->rook_W, F1);
+        board->whiteKingSq = G1;
+    } else if (move.castle == Q) {
+        board->king_W = board->king_W << 2;
+        board->rook_W = toggleBit(board->rook_W, A1);
+        board->rook_W = setBit(board->rook_W, D1);
+        board->whiteKingSq = C1;
+    } else if (move.castle == k) {
+        board->king_B = board->king_B >> 2;
+        board->rook_B = toggleBit(board->rook_B, H8);
+        board->rook_B = setBit(board->rook_B, F8);
+        board->blackKingSq = G8;
+    } else if (move.castle == q) {
+        board->king_B = board->king_B << 2;
+        board->rook_B = toggleBit(board->rook_B, A8);
+        board->rook_B = setBit(board->rook_B, D8);
+        board->blackKingSq = C8;
+    }
+
+    // Update castling rights
+    board->castling &= board->turn ? ALL_CASTLE_B : ALL_CASTLE_W;
+}
 
 void pushMove(Board* board, Move move) {
-    // En passant
+    // Make en passant move
     if (move.toSquare == board->epSquare) {
-        Bitboard* friendlyPawns = board->turn ? &(board->pawn_W) : &(board->pawn_B);
-        Bitboard* opponentPawns = board->turn ? &(board->pawn_B) : &(board->pawn_W);
-        bool isPawnMove = *friendlyPawns & (1LL << move.fromSquare);
+        bool isPawnMove = move.pieceType == PAWN_W || move.pieceType == PAWN_B;
 
         if (isPawnMove) {
-            int capturedSquare = board->epSquare + (board->turn ? -8 : 8);
-
-            // Capture the pawn
-            *opponentPawns = toggleBit(*opponentPawns, capturedSquare);
-
-            // Move the pawn that takes
-            *friendlyPawns = toggleBit(*friendlyPawns, move.fromSquare);
-            *friendlyPawns = setBit(*friendlyPawns, board->epSquare);
-
-            board->epSquare = -1;
-            board->turn ^= 1;
+            makeEnPassantMove(board, move);
             computeOccupancyMasks(board);
+            board->turn = board->turn ? 0 : 1;
             return;
         }
     } 
     
-    // Castle
+    // Make castle move
     if (move.castle) {
-        if (move.castle == K) {
-            board->king_W = board->king_W >> 2;
-            board->rook_W = toggleBit(board->rook_W, H1);
-            board->rook_W = setBit(board->rook_W, F1);
-            board->whiteKingSq = G1;
-        } else if (move.castle == Q) {
-            board->king_W = board->king_W << 2;
-            board->rook_W = toggleBit(board->rook_W, A1);
-            board->rook_W = setBit(board->rook_W, D1);
-            board->whiteKingSq = C1;
-        } else if (move.castle == k) {
-            board->king_B = board->king_B >> 2;
-            board->rook_B = toggleBit(board->rook_B, H8);
-            board->rook_B = setBit(board->rook_B, F8);
-            board->blackKingSq = G8;
-        } else if (move.castle == q) {
-            board->king_B = board->king_B << 2;
-            board->rook_B = toggleBit(board->rook_B, A8);
-            board->rook_B = setBit(board->rook_B, D8);
-            board->blackKingSq = C8;
-        }
-
-        // Update castling rights
-        board->castling &= board->turn ? ALL_CASTLE_B : ALL_CASTLE_W;
-
-        board->epSquare = -1;
-        board->turn ^= 1;
+        makeCastleMove(board, move); 
         computeOccupancyMasks(board);
+        board->epSquare = -1;
+        board->turn = board->turn ? 0 : 1;
         return;
     }
 
-    // Set potential ep-square
+    // Reset ep-square
     board->epSquare = -1;
-    Bitboard from = 1LL << move.fromSquare;
-    bool starterPawnMoved = from & (board->turn ? board->pawn_W : board->pawn_B);
-    int distanceCovered = abs(move.fromSquare - move.toSquare);
-    int twoRanks = 16;
-    if (starterPawnMoved && distanceCovered == twoRanks) {
-        board->epSquare = board->turn ? move.fromSquare + 8 : move.fromSquare - 8;
+
+    // Set potential ep-square
+    bool starterPawnMoved = (move.pieceType == PAWN_W && (move.fromSquare > A1 && move.fromSquare < H3)) ||
+                            (move.pieceType == PAWN_B && (move.fromSquare > A6 && move.fromSquare < H8));
+    if (starterPawnMoved) {
+        int distanceCovered = abs(move.fromSquare - move.toSquare);
+        if (distanceCovered == TWO_RANKS) {
+            board->epSquare = board->turn ? move.fromSquare + 8 : move.fromSquare - 8;
+        }
     }
 
     // Make move
-    Bitboard* bb = &(board->pawn_W);
-    Bitboard kingMask = board->turn ? board->king_W : board->king_B;
     Bitboard friendlyRooks = board->turn ? board->rook_W : board->rook_B;
+    Bitboard* pieceThatMoved = (&board->pawn_W + move.pieceType);
+
+    // Update castling rights
+    if (move.pieceType == KING_W || move.pieceType == KING_B) {
+        board->castling &= board->turn ? ALL_CASTLE_B : ALL_CASTLE_W;
+    } else if (*pieceThatMoved == friendlyRooks) {
+        if (board->turn && move.fromSquare == A1) board->castling &= 0b1101;
+        if (board->turn && move.fromSquare == H1) board->castling &= 0b1110;
+        if (!board->turn && move.fromSquare == A8) board->castling &= 0b0111;
+        if (!board->turn && move.fromSquare == H8) board->castling &= 0b1011;
+    }
+
+    // "Lift up the piece"
+    *pieceThatMoved = toggleBit(*pieceThatMoved, move.fromSquare);
+
+    // If not promotion set the piece square directly
+    if (move.promotion <= 0) {
+        *pieceThatMoved = setBit(*pieceThatMoved, move.toSquare);
+
+        if (*pieceThatMoved == board->king_W) {
+            board->whiteKingSq = move.toSquare;
+        } else if (*pieceThatMoved == board->king_B) {
+            board->blackKingSq = move.toSquare;
+        }
+    } else {
+        Bitboard* targetMask = &(board->pawn_W) + move.promotion;
+        *targetMask = setBit(*targetMask, move.toSquare);
+    }
+
+    Bitboard* bb = board->turn ? &(board->pawn_B) : &(board->pawn_W);
     Bitboard opponentRooks = board->turn ? board->rook_B : board->rook_W;
+    for (int i = 0; i < 5; i++) {
 
-    for (int i = 0; i < 12; i++) {
-        // Find piece on fromSquare
-        if (getBit(*bb, move.fromSquare)) {
-
-            // Update castling rights
-            if (*bb == kingMask) {
-                board->castling &= board->turn ? ALL_CASTLE_B : ALL_CASTLE_W;
-            } else if (*bb == friendlyRooks) {
-                if (board->turn && move.fromSquare == A1) board->castling &= 0b1101;
-                if (board->turn && move.fromSquare == H1) board->castling &= 0b1110;
-                if (!board->turn && move.fromSquare == A8) board->castling &= 0b0111;
-                if (!board->turn && move.fromSquare == H8) board->castling &= 0b1011;
-            }
-
-            // "Lift up the piece"
-            *bb = toggleBit(*bb, move.fromSquare);
-
-            // If not promotion set the piece square directly
-            if (move.promotion <= 0) {
-                *bb = setBit(*bb, move.toSquare);
-
-                if (*bb == board->king_W) {
-                    board->whiteKingSq = move.toSquare;
-                } else if (*bb == board->king_B) {
-                    board->blackKingSq = move.toSquare;
-                }
-            }
-
-        } else if (getBit(*bb, move.toSquare)) {
+        if (getBit(*bb, move.toSquare)) {
 
             // Update castling rights if rooks are captured
             if (*bb == opponentRooks) {
@@ -204,16 +211,8 @@ void pushMove(Board* board, Move move) {
         ++bb;
     }
 
-    // Handle promotion
-    if (move.promotion > 0) {
-        Bitboard* targetMask = &(board->pawn_W) + move.promotion;
-        *targetMask = setBit(*targetMask, move.toSquare);
-    }
-
     // Toggle turn
-    board->turn ^= 1;
-
-    // Update occupancy
+    board->turn = board->turn ? 0 : 1;
     computeOccupancyMasks(board);
 }
 
