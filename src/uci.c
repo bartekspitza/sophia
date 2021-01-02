@@ -9,6 +9,7 @@
 #include "evaluation.h"
 #include "zobrist.h"
 #include "san.h"
+#include "bitboards.h"
 
 void parsePosition(char *command, Board* board);
 void getBestMove(Board board);
@@ -19,6 +20,7 @@ char* ENGINE_NAME = "Sophia";
 
 int main(void) {
     // Init engine 
+    initBitboards();
     initZobrist();
     initMoveGeneration();
     initEvaluation();

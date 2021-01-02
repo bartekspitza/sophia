@@ -7,6 +7,8 @@
 #include "movegen.h"
 #include "search.h"
 #include "san.h"
+#include "bitboards.h"
+#include "utils.h"
 
 typedef unsigned long long u64;
 u64 perft(Board board, int depth, bool divide);
@@ -36,6 +38,7 @@ u64 EXPECTED_RESULTS[][6] = {
 };
 
 int main() {
+    initBitboards();
     initMoveGeneration();
 
     int depth = 4;

@@ -2,11 +2,12 @@
 #define BOARD_H
 
 #include "typedefs.h"
+#include "bitboards.h"
 
-#define getBit(bitboard, square) (bitboard & (1ULL << square))
-#define popBit(bitboard, square) (bitboard & ~(1ULL << square))
-#define setBit(bitboard, square) bitboard | (1ULL << square)
-#define toggleBit(bitboard, square) (bitboard ^= (1ULL << square))
+#define getBit(bitboard, square) (bitboard & SQUARE_BITBOARDS[square])
+#define popBit(bitboard, square) (bitboard & ~SQUARE_BITBOARDS[square])
+#define setBit(bitboard, square) bitboard | SQUARE_BITBOARDS[square]
+#define toggleBit(bitboard, square) (bitboard ^ SQUARE_BITBOARDS[square])
 
 int result(Board board, Move pseudoLegal[], int length);
 void computeOccupancyMasks(Board* board);

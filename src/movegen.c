@@ -156,7 +156,7 @@ Bitboard occupancyMask(int index, int bits, Bitboard attackMask) {
     
     for (int i = 0; i < bits; i++) {
         int square = indexOfLastSetBit(attackMask);
-        toggleBit(attackMask, square);
+        attackMask = toggleBit(attackMask, square);
         
         if (index & (1 << i)) {
             occupancy |= (1ULL << square);
@@ -306,8 +306,6 @@ Bitboard getRookAttacks(int square, Bitboard occupancy) {
 	return ROOK_ATTACKS[square][occupancy];
 }
 
-
-
 void addMove(Board board, Move move, Move moves[], int* indx) {
     moves[*indx] = move;
     *indx += 1;
@@ -405,7 +403,7 @@ void initMoveGeneration(void) {
 }
 
 bool isSquareAttacked(Board board, int square) {
-    Bitboard sqBb = 1LL << square;
+    Bitboard sqBb = SQUARE_BITBOARDS[square];
     Bitboard pawn = board.turn ? board.pawn_B : board.pawn_W;
     Bitboard king = board.turn ? board.king_B : board.king_W;
     Bitboard knight = board.turn ? board.knight_B : board.knight_W;
@@ -477,7 +475,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
     pawnSingleAndDblPushes(board, &singlePush, &doublePush);
     Bitboard kingMovesMask = getKingMask(board);
 
-    Bitboard epSquare = board.epSquare == -1 ? 0LL : 1LL << board.epSquare;
+    Bitboard epSquare = board.epSquare == -1 ? 0LL : SQUARE_BITBOARDS[board.epSquare];
     int startPieceType = board.turn ? PAWN_W : PAWN_B;
 
     // Pawn attacks

@@ -5,6 +5,7 @@
 #include "movegen.h"
 #include "utils.h"
 #include "san.h"
+#include "bitboards.h"
 
 void setUp(void);
 void tearDown(void);
@@ -38,6 +39,7 @@ void gameResult_undetermined(void);
 /*-------Tests--------*/
 
 int main(void) {
+    initBitboards();
     initMoveGeneration();
 
     UNITY_BEGIN();
