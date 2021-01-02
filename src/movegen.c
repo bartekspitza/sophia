@@ -478,6 +478,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
     Bitboard kingMovesMask = getKingMask(board);
 
     Bitboard epSquare = board.epSquare == -1 ? 0LL : 1LL << board.epSquare;
+    int startPieceType = board.turn ? PAWN_W : PAWN_B;
 
     // Pawn attacks
     while (pawnMask) {
@@ -522,14 +523,14 @@ int pseudoLegalMoves(Board board, Move moves[]) {
     while (doublePush) {
         int sq = __builtin_ctzll(doublePush);
         int fromSquare = board.turn ? sq-8*2 : sq+8*2;
-        Move move = getMove(fromSquare, sq, NO_PROMOTION, NOT_CASTLE, board.turn ? PAWN_W : PAWN_B);
+        Move move = getMove(fromSquare, sq, NO_PROMOTION, NOT_CASTLE, startPieceType + PAWN_W);
         addMove(board, move, moves, &length);
         doublePush &= doublePush - 1;
     }
 
     while (kingMovesMask) {
         int sq = __builtin_ctzll(kingMovesMask);
-        Move move = getMove(kingSquare, sq, NO_PROMOTION, NOT_CASTLE, board.turn ? KING_W : KING_B);
+        Move move = getMove(kingSquare, sq, NO_PROMOTION, NOT_CASTLE, startPieceType + KING_W);
         addMove(board, move, moves, &length);
         kingMovesMask &= kingMovesMask - 1;
     }
@@ -540,7 +541,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
 
         while (target) {
             int indx = __builtin_ctzll(target);
-            Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, board.turn ? BISHOP_W : BISHOP_B);
+            Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + BISHOP_W);
             addMove(board, move, moves, &length);
             target &= target - 1;
         }
@@ -553,7 +554,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
 
         while (target) {
             int indx = __builtin_ctzll(target);
-            Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, board.turn ? ROOK_W : ROOK_B);
+            Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + ROOK_W);
             addMove(board, move, moves, &length);
             target &= target - 1;
         }
@@ -569,7 +570,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
 
         while (target) {
             int indx = __builtin_ctzll(target);
-            Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, board.turn ? QUEEN_W : QUEEN_B);
+            Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + QUEEN_W);
             addMove(board, move, moves, &length);
             target &= target - 1;
         }
@@ -582,7 +583,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
 
         while (target) {
             int indx = __builtin_ctzll(target);
-            Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, board.turn ? KNIGHT_W : KNIGHT_B);
+            Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + KNIGHT_W);
             addMove(board, move, moves, &length);
             target &= target - 1;
         }
