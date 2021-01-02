@@ -24,6 +24,7 @@ void moveToSan_promotion(void);
 void sanToMove_normal(void);
 void sanToMove_castle(void);
 void sanToMove_promotion(void);
+void sanToMove_pieceType(void);
 
 void gameResult_blackCheckmate(void);
 void gameResult_whiteCheckmate(void);
@@ -53,6 +54,7 @@ int main(void) {
     RUN_TEST(sanToMove_normal);
     RUN_TEST(sanToMove_castle);
     RUN_TEST(sanToMove_promotion);
+    RUN_TEST(sanToMove_pieceType);
 
     RUN_TEST(gameResult_blackCheckmate);
     RUN_TEST(gameResult_blackStalemate);
@@ -150,6 +152,41 @@ void gameResult_whiteCheckmate(void) {
     int length = pseudoLegalMoves(board, moves);
     int gameResult = result(board, moves, length);
     TEST_ASSERT_EQUAL_INT16(WHITE_WIN, gameResult);
+}
+
+void sanToMove_pieceType(void) {
+    Board board;
+    setFen(&board, "rnbqk3/6p1/8/8/8/8/6P1/RNBQK3 w Qq - 0 1");
+    Move move;
+
+    // White moves
+    sanToMove(board, &move, "g2g3");
+    TEST_ASSERT_EQUAL_INT16(PAWN_W, move.pieceType);
+    sanToMove(board, &move, "e1e2");
+    TEST_ASSERT_EQUAL_INT16(KING_W, move.pieceType);
+    sanToMove(board, &move, "d1d2");
+    TEST_ASSERT_EQUAL_INT16(QUEEN_W, move.pieceType);
+    sanToMove(board, &move, "c1d2");
+    TEST_ASSERT_EQUAL_INT16(BISHOP_W, move.pieceType);
+    sanToMove(board, &move, "b1c3");
+    TEST_ASSERT_EQUAL_INT16(KNIGHT_W, move.pieceType);
+    sanToMove(board, &move, "a1a2");
+    TEST_ASSERT_EQUAL_INT16(ROOK_W, move.pieceType);
+
+    // Black moves
+    board.turn = BLACK;
+    sanToMove(board, &move, "g7g7");
+    TEST_ASSERT_EQUAL_INT16(PAWN_B, move.pieceType);
+    sanToMove(board, &move, "e8e7");
+    TEST_ASSERT_EQUAL_INT16(KING_B, move.pieceType);
+    sanToMove(board, &move, "d8d7");
+    TEST_ASSERT_EQUAL_INT16(QUEEN_B, move.pieceType);
+    sanToMove(board, &move, "c8d7");
+    TEST_ASSERT_EQUAL_INT16(BISHOP_B, move.pieceType);
+    sanToMove(board, &move, "b8c6");
+    TEST_ASSERT_EQUAL_INT16(KNIGHT_B, move.pieceType);
+    sanToMove(board, &move, "a8a7");
+    TEST_ASSERT_EQUAL_INT16(ROOK_B, move.pieceType);
 }
 
 void sanToMove_castle(void) {

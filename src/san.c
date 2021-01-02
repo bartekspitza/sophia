@@ -48,6 +48,16 @@ void sanToMove(Board board, Move* move, char* san) {
     else if (san[4] == 'b') {
         move->promotion = board.turn ? BISHOP_W : BISHOP_B;
     }
+
+
+    // Calculate what piece moved
+    for (int i = 0; i < 12; i++) {
+        Bitboard bb = *(&board.pawn_W+i);
+        if (getBit(bb, move->fromSquare)) {
+            move->pieceType = i;
+            break;
+        }
+    }
 }
 
 void moveToSan(Move move, char san[]) {
