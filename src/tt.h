@@ -15,7 +15,7 @@ enum NODE_TYPE {EXACT, LOWER, UPPER};
 
 extern TTEntry TT_TABLE[];
 
-TTEntry get(Board board, Bitboard* zobrist);
+TTEntry getTTEntry(Bitboard zobrist);
 void addTTEntry(Board board, int eval, Move move, int depth, int beta, int alpha);
 
 #endif

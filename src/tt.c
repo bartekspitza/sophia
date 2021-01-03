@@ -4,11 +4,8 @@
 const int TT_SIZE = 100000;
 TTEntry TT_TABLE[100000];
 
-TTEntry get(Board board, Bitboard* zobrist) {
-    *zobrist = hash(board);
-    int indx = *zobrist % TT_SIZE;
-    
-    return TT_TABLE[indx];
+TTEntry getTTEntry(Bitboard zobrist) {
+    return TT_TABLE[zobrist % TT_SIZE];
 }
 
 void addTTEntry(Board board, int eval, Move move, int depth, int beta, int alpha) {

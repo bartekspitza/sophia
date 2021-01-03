@@ -3,6 +3,7 @@
 #include "board.h"
 #include "movegen.h"
 #include "tt.h"
+#include "zobrist.h"
 #include <string.h>
 
 int max(int a, int b);
@@ -23,8 +24,8 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
     PVline line;
 
     // TT table lookup
-    Bitboard zobrist;
-    TTEntry entry = get(board, &zobrist);
+    Bitboard zobrist = hash(board);
+    TTEntry entry = getTTEntry(zobrist);
     if (zobrist == entry.zobrist && entry.depth >= depth) {
         if (entry.nodeType == EXACT) {
 
