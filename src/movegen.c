@@ -123,40 +123,11 @@ Magic bitboard methods
 
 ---------------------------------------------*/
 
-
-/*
-int bitScanForward(Bitboard* bb) {
-    Bitboard tmp = *bb & -(*bb);
-    int indx = __builtin_ctzl(*bb);
-    *bb ^= tmp;
-
-    return indx;
-}
-*/
-
-int countBits(Bitboard bitboard) {
-  int count = 0;
-  
-  while (bitboard) {
-      count++;
-      bitboard &= bitboard - 1;
-  }
-  
-  return count;
-}
-
-int indexOfLastSetBit(Bitboard bitboard) {
-    if (bitboard != 0)
-        return countBits((bitboard & -bitboard) - 1);
-    
-    return -1;
-}
-
 Bitboard occupancyMask(int index, int bits, Bitboard attackMask) {
     Bitboard occupancy = 0ULL;
     
     for (int i = 0; i < bits; i++) {
-        int square = indexOfLastSetBit(attackMask);
+        int square = __builtin_ctzll(attackMask);
         attackMask = toggleBit(attackMask, square);
         
         if (index & (1 << i)) {
