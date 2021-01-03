@@ -8,6 +8,13 @@ perft: perft.c
 	@./perft
 	@rm perft
 
+
+profiling: profiling.c
+	@gcc -pg profiling.c bitboards.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o profiling
+	./profiling
+	gprof profiling gmon.out > analysis.txt
+	rm profiling
+
 perft-pg: perft.c
 	@gcc -pg perft.c bitboards.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o perft
 	./perft
