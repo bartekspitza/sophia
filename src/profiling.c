@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "board.h"
 #include "fen.h"
 #include "search.h"
@@ -25,6 +26,8 @@ int main(void) {
     int res = result(board, moves, cmoves);
 
     int depth = 4;
+
+    clock_t start = clock();
     while (res == UN_DETERMINED) {
 
         int nodesSearched = 0;
@@ -38,5 +41,8 @@ int main(void) {
         cmoves = pseudoLegalMoves(board, moves);
         res = result(board, moves, cmoves);
     }
+
+    double elapsed = (double) (clock() - start) / CLOCKS_PER_SEC;
+    printf("Elapsed: %.2fs\n", elapsed);
     return 0;
 }

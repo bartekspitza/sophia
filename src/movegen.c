@@ -306,11 +306,6 @@ Bitboard getRookAttacks(int square, Bitboard occupancy) {
 	return ROOK_ATTACKS[square][occupancy];
 }
 
-void addMove(Board board, Move move, Move moves[], int* indx) {
-    moves[*indx] = move;
-    *indx += 1;
-}
-
 Bitboard getKingMask(Board board) {
     int kingSquare = board.turn ? board.whiteKingSq : board.blackKingSq;
 
@@ -348,11 +343,13 @@ void addPawnAdvanceWithPossiblePromos(Board board, bool isPromoting, int turn, i
     if (isPromoting) {
         for (int i = 0; i < 4; i++) {
             Move move = getMove(from, to, turn ? WHITE_PROMOTIONS[i] : BLACK_PROMOTIONS[i], NOT_CASTLE, board.turn ? PAWN_W : PAWN_B);
-            addMove(board, move, moves, indx);
+            moves[*indx] = move;
+            *indx += 1;
         }
     } else {
         Move move = getMove(from, to, NO_PROMOTION, NOT_CASTLE, board.turn ? PAWN_W : PAWN_B);
-        addMove(board, move, moves, indx);
+        moves[*indx] = move;
+        *indx += 1;
     }
 }
 
@@ -522,14 +519,16 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         int sq = __builtin_ctzll(doublePush);
         int fromSquare = board.turn ? sq-8*2 : sq+8*2;
         Move move = getMove(fromSquare, sq, NO_PROMOTION, NOT_CASTLE, startPieceType + PAWN_W);
-        addMove(board, move, moves, &length);
+        moves[length] = move;
+        length++;
         doublePush &= doublePush - 1;
     }
 
     while (kingMovesMask) {
         int sq = __builtin_ctzll(kingMovesMask);
         Move move = getMove(kingSquare, sq, NO_PROMOTION, NOT_CASTLE, startPieceType + KING_W);
-        addMove(board, move, moves, &length);
+        moves[length] = move;
+        length++;
         kingMovesMask &= kingMovesMask - 1;
     }
     while (bishopBitboard) {
@@ -540,7 +539,8 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         while (target) {
             int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + BISHOP_W);
-            addMove(board, move, moves, &length);
+            moves[length] = move;
+            length++;
             target &= target - 1;
         }
         bishopBitboard &= bishopBitboard - 1;
@@ -553,7 +553,8 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         while (target) {
             int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + ROOK_W);
-            addMove(board, move, moves, &length);
+            moves[length] = move;
+            length++;
             target &= target - 1;
         }
 
@@ -569,7 +570,8 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         while (target) {
             int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + QUEEN_W);
-            addMove(board, move, moves, &length);
+            moves[length] = move;
+            length++;
             target &= target - 1;
         }
         queenBitboard &= queenBitboard - 1;
@@ -582,7 +584,8 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         while (target) {
             int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + KNIGHT_W);
-            addMove(board, move, moves, &length);
+            moves[length] = move;
+            length++;
             target &= target - 1;
         }
         knightBitboard &= knightBitboard - 1;
@@ -594,14 +597,16 @@ int pseudoLegalMoves(Board board, Move moves[]) {
             bool pathClear = (board.occupancy & WHITE_CASTLE_K_PATH) == 0;
             if (pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, K, -1);
-                addMove(board, move, moves, &length);
+                moves[length] = move;
+                length++;
             }
         }
         if (board.castling & Q) {
             bool pathClear = (board.occupancy & WHITE_CASTLE_Q_PATH) == 0;
             if (pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, Q, -1);
-                addMove(board, move, moves, &length);
+                moves[length] = move;
+                length++;
             }
         }
     } else {
@@ -609,7 +614,8 @@ int pseudoLegalMoves(Board board, Move moves[]) {
             bool pathClear = (board.occupancy & BLACK_CASTLE_K_PATH) == 0;
             if (pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, k, -1);
-                addMove(board, move, moves, &length);
+                moves[length] = move;
+                length++;
             }
         }
         if (board.castling & q) {
@@ -617,7 +623,8 @@ int pseudoLegalMoves(Board board, Move moves[]) {
 
             if (pathClear) {
                 Move move = getMove(0, 0, NO_PROMOTION, q, -1);
-                addMove(board, move, moves, &length);
+                moves[length] = move;
+                length++;
             }
         }
     }
