@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "san.h"
 #include "bitboards.h"
+#include "zobrist.h"
 
 void setUp(void);
 void tearDown(void);
@@ -17,6 +18,7 @@ void parseFen_pieceMasks(void);
 void parseFen_epSquare(void);
 void parseFen_kingSquares(void);
 void parseFen_castlingRights(void);
+void parseFen_hash(void);
 
 void moveToSan_normal(void);
 void moveToSan_castle(void);
@@ -26,6 +28,19 @@ void sanToMove_normal(void);
 void sanToMove_castle(void);
 void sanToMove_promotion(void);
 void sanToMove_pieceType(void);
+
+void pushMove_hash_noCapture(void);
+void pushMove_hash_capture(void);
+void pushMove_hash_moveThatSetsEpSquare(void);
+void pushMove_hash_moveThatResetsEpSquare(void);
+void pushMove_hash_enPassantMove(void);
+void pushMove_hash_castlingMoveWhiteKing(void);
+void pushMove_hash_castlingMoveWhiteQueen(void);
+void pushMove_hash_castlingMoveBlackKing(void);
+void pushMove_hash_castlingMoveBlackQueen(void);
+void pushMove_hash_kingMoveThatRemovesCastlingRights(void);
+void pushMove_hash_rookMoveThatRemovesCastlingRights(void);
+void pushMove_hash_castlingMoveWhenEpSquareIsSet(void);
 
 void gameResult_blackCheckmate(void);
 void gameResult_whiteCheckmate(void);
@@ -41,6 +56,7 @@ void gameResult_undetermined(void);
 int main(void) {
     initBitboards();
     initMoveGeneration();
+    initZobrist();
 
     UNITY_BEGIN();
     RUN_TEST(parseFen_turn);
@@ -48,6 +64,7 @@ int main(void) {
     RUN_TEST(parseFen_epSquare);
     RUN_TEST(parseFen_kingSquares);
     RUN_TEST(parseFen_castlingRights);
+    RUN_TEST(parseFen_hash);
 
     RUN_TEST(moveToSan_normal);
     RUN_TEST(moveToSan_castle);
@@ -58,6 +75,19 @@ int main(void) {
     RUN_TEST(sanToMove_promotion);
     RUN_TEST(sanToMove_pieceType);
 
+    RUN_TEST(pushMove_hash_noCapture);
+    RUN_TEST(pushMove_hash_capture);
+    RUN_TEST(pushMove_hash_moveThatSetsEpSquare);
+    RUN_TEST(pushMove_hash_moveThatResetsEpSquare);
+    RUN_TEST(pushMove_hash_enPassantMove);
+    RUN_TEST(pushMove_hash_castlingMoveWhiteKing);
+    RUN_TEST(pushMove_hash_castlingMoveWhiteQueen);
+    RUN_TEST(pushMove_hash_castlingMoveBlackKing);
+    RUN_TEST(pushMove_hash_castlingMoveBlackQueen);
+    RUN_TEST(pushMove_hash_kingMoveThatRemovesCastlingRights);
+    RUN_TEST(pushMove_hash_rookMoveThatRemovesCastlingRights);
+    RUN_TEST(pushMove_hash_castlingMoveWhenEpSquareIsSet);
+
     RUN_TEST(gameResult_blackCheckmate);
     RUN_TEST(gameResult_blackStalemate);
     RUN_TEST(gameResult_whiteCheckmate);
@@ -67,6 +97,116 @@ int main(void) {
     RUN_TEST(gameResult_insufficientMaterial_KB);
     RUN_TEST(gameResult_undetermined);
     return UNITY_END();
+}
+
+void pushMove_hash_castlingMoveWhenEpSquareIsSet(void) {
+    Board board;
+    setFen(&board, "r3k2r/8/8/8/3P4/8/8/4K3 b kq d3 0 1");
+    pushSan(&board, "e8g8");
+
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+
+void pushMove_hash_kingMoveThatRemovesCastlingRights(void) {
+    Board board;
+    setFen(&board, "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1");
+    pushSan(&board, "h1h2");
+
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+
+void pushMove_hash_rookMoveThatRemovesCastlingRights(void) {
+    Board board;
+    setFen(&board, "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1");
+    pushSan(&board, "a1a2");
+
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+
+void pushMove_hash_castlingMoveWhiteQueen(void) {
+    Board board;
+    setFen(&board, "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1");
+    pushSan(&board, "e1c1");
+    
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+void pushMove_hash_castlingMoveBlackKing(void) {
+    Board board;
+    setFen(&board, "r3k2r/8/8/8/8/8/8/4K3 b kq - 0 1");
+    pushSan(&board, "e8g8");
+
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+
+void pushMove_hash_castlingMoveBlackQueen(void) {
+    Board board;
+    setFen(&board, "r3k2r/8/8/8/8/8/8/4K3 b kq - 0 1");
+    pushSan(&board, "e8c8");
+
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+
+void pushMove_hash_castlingMoveWhiteKing(void) {
+    Board board;
+    setFen(&board, "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1");
+    pushSan(&board, "e1g1");
+    
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+
+void pushMove_hash_enPassantMove(void) {
+    Board board;
+    setFen(&board, START_FEN);
+    pushSan(&board, "e2e4");
+    pushSan(&board, "a7a6");
+    pushSan(&board, "e4e5");
+    pushSan(&board, "d7d5");
+    pushSan(&board, "e5d6");
+
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+
+void pushMove_hash_moveThatResetsEpSquare(void) {
+    Board board;
+    setFen(&board, START_FEN);
+    pushSan(&board, "e2e4");
+    pushSan(&board, "e7e6");
+
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+
+void pushMove_hash_moveThatSetsEpSquare(void) {
+    Board board;
+    setFen(&board, START_FEN);
+    pushSan(&board, "e2e4");
+
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+void pushMove_hash_noCapture(void) {
+    Board board;
+    setFen(&board, START_FEN);
+    pushSan(&board, "e2e3");
+    Bitboard correctHash = hash(board);
+
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+}
+
+void pushMove_hash_capture(void) {
+    Board board;
+    setFen(&board, START_FEN);
+    pushSan(&board, "e2e7");
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
 }
 
 void gameResult_undetermined(void) {
@@ -270,6 +410,14 @@ void parseFen_turn(void) {
     setFen(&board, fen);
 
     TEST_ASSERT_TRUE(board.turn == BLACK);
+}
+
+void parseFen_hash(void) {
+    Board board;
+    setFen(&board, START_FEN);
+    Bitboard zob = hash(board);
+
+    TEST_ASSERT_EQUAL_UINT64(zob, board.hash);
 }
 
 void parseFen_pieceMasks(void) {

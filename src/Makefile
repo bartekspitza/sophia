@@ -22,6 +22,6 @@ perft-pg: perft.c
 	rm perft
 
 test: test.c
-	@gcc test.c -o test bitboards.c evaluation.c san.c board.c fen.c utils.c movegen.c magics.c -L../libs/unity -lunity
+	@gcc test.c -o test bitboards.c evaluation.c san.c zobrist.c board.c fen.c utils.c movegen.c magics.c -L../libs/unity -lunity
 	@./test
 	@rm test

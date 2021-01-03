@@ -24,9 +24,8 @@ int negamax(Board board, Move* move, int depth, int alpha, int beta, int origDep
     PVline line;
 
     // TT table lookup
-    Bitboard zobrist = hash(board);
-    TTEntry entry = getTTEntry(zobrist);
-    if (zobrist == entry.zobrist && entry.depth >= depth) {
+    TTEntry entry = getTTEntry(board.hash);
+    if (board.hash == entry.zobrist && entry.depth >= depth) {
         if (entry.nodeType == EXACT) {
 
             if (origDepth == depth) {

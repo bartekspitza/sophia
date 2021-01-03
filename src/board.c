@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "board.h"
 #include "movegen.h"
+#include "zobrist.h"
 
 #define TWO_RANKS 16
 
@@ -85,6 +86,12 @@ void computeOccupancyMasks(Board* board) {
 void makeEnPassantMove(Board* board, Move move) {
     int capturedSquare = board->epSquare + (board->turn ? -8 : 8);
 
+    board->hash ^= EN_PASSANT[board->epSquare];
+    board->hash ^= PIECES[move.pieceType][move.fromSquare];
+    board->hash ^= PIECES[move.pieceType][move.toSquare];
+    board->hash ^= PIECES[board->turn ? PAWN_B : PAWN_W][capturedSquare];
+    board->hash ^= WHITE_TO_MOVE;
+
     Bitboard* friendlyPawns = board->turn ? &(board->pawn_W) : &(board->pawn_B);
     Bitboard* opponentPawns = board->turn ? &(board->pawn_B) : &(board->pawn_W);
 
@@ -100,29 +107,53 @@ void makeEnPassantMove(Board* board, Move move) {
 
 void makeCastleMove(Board* board, Move move) {
     if (move.castle == K) {
+        board->hash ^= PIECES[KING_W][E1];
+        board->hash ^= PIECES[KING_W][G1];
+        board->hash ^= PIECES[ROOK_W][H1];
+        board->hash ^= PIECES[ROOK_W][F1];
         board->king_W = board->king_W >> 2;
         board->rook_W = toggleBit(board->rook_W, H1);
         board->rook_W = setBit(board->rook_W, F1);
         board->whiteKingSq = G1;
     } else if (move.castle == Q) {
+        board->hash ^= PIECES[KING_W][E1];
+        board->hash ^= PIECES[KING_W][C1];
+        board->hash ^= PIECES[ROOK_W][A1];
+        board->hash ^= PIECES[ROOK_W][D1];
         board->king_W = board->king_W << 2;
         board->rook_W = toggleBit(board->rook_W, A1);
         board->rook_W = setBit(board->rook_W, D1);
         board->whiteKingSq = C1;
     } else if (move.castle == k) {
+        board->hash ^= PIECES[KING_B][E8];
+        board->hash ^= PIECES[KING_B][G8];
+        board->hash ^= PIECES[ROOK_B][H8];
+        board->hash ^= PIECES[ROOK_B][F8];
         board->king_B = board->king_B >> 2;
         board->rook_B = toggleBit(board->rook_B, H8);
         board->rook_B = setBit(board->rook_B, F8);
         board->blackKingSq = G8;
     } else if (move.castle == q) {
+        board->hash ^= PIECES[KING_B][E8];
+        board->hash ^= PIECES[KING_B][C8];
+        board->hash ^= PIECES[ROOK_B][A8];
+        board->hash ^= PIECES[ROOK_B][D8];
         board->king_B = board->king_B << 2;
         board->rook_B = toggleBit(board->rook_B, A8);
         board->rook_B = setBit(board->rook_B, D8);
         board->blackKingSq = C8;
     }
 
+    if (board->epSquare != -1) {
+        board->hash ^= EN_PASSANT[board->epSquare];
+    }
+
+    board->hash ^= WHITE_TO_MOVE;
+    board->hash ^= CASTLING[board->castling];
+
     // Update castling rights
     board->castling &= board->turn ? ALL_CASTLE_B : ALL_CASTLE_W;
+    board->hash ^= CASTLING[board->castling];
 }
 
 void pushMove(Board* board, Move move) {
@@ -144,8 +175,22 @@ void pushMove(Board* board, Move move) {
         computeOccupancyMasks(board);
         board->epSquare = -1;
         board->turn = board->turn ? 0 : 1;
+
         return;
     }
+
+    // Update hash
+    board->hash ^= PIECES[move.pieceType][move.fromSquare];
+    board->hash ^= PIECES[move.pieceType][move.toSquare];
+    board->hash ^= WHITE_TO_MOVE;
+
+    // XOR out the prev ep square
+    if (board->epSquare != -1) {
+        board->hash ^= EN_PASSANT[board->epSquare];
+    }
+
+    // XOR out current castling rights
+    board->hash ^= CASTLING[board->castling];
 
     // Reset ep-square
     board->epSquare = -1;
@@ -158,6 +203,11 @@ void pushMove(Board* board, Move move) {
         if (distanceCovered == TWO_RANKS) {
             board->epSquare = board->turn ? move.fromSquare + 8 : move.fromSquare - 8;
         }
+    }
+
+    // Update hash with the new ep square
+    if (board->epSquare != -1) {
+        board->hash ^= EN_PASSANT[board->epSquare];
     }
 
     // Make move
@@ -197,6 +247,9 @@ void pushMove(Board* board, Move move) {
 
         if (getBit(*bb, move.toSquare)) {
 
+            // Update hash
+            board->hash ^= PIECES[(board->turn ? 6 : 0) + i][move.toSquare];
+
             // Update castling rights if rooks are captured
             if (*bb == opponentRooks) {
                 if (board->turn && move.toSquare == H8) board->castling &= 0b1011;
@@ -210,6 +263,9 @@ void pushMove(Board* board, Move move) {
         }
         ++bb;
     }
+
+    // XOR in new castling rights
+    board->hash ^= CASTLING[board->castling];
 
     // Toggle turn
     board->turn = board->turn ? 0 : 1;

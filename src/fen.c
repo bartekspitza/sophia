@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "fen.h"
 #include "board.h"
+#include "zobrist.h"
 
 Bitboard* pieceBitboard(Board* board, int pieceType) {
     return (Bitboard*) board + pieceType;
@@ -136,4 +137,7 @@ void setFen(Board* board, char* fen) {
 
     // Initialize occupancy masks
     computeOccupancyMasks(board);
+
+    // Set hash
+    board->hash = hash(*board);
 }

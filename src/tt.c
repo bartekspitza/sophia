@@ -1,5 +1,4 @@
 #include "tt.h"
-#include "zobrist.h"
 
 const int TT_SIZE = 100000;
 TTEntry TT_TABLE[100000];
@@ -21,7 +20,7 @@ void addTTEntry(Board board, int eval, Move move, int depth, int beta, int alpha
     entry.eval = eval;
     entry.move = move;
     entry.depth = depth;
-    entry.zobrist = hash(board);
+    entry.zobrist = board.hash;
 
     TT_TABLE[entry.zobrist % TT_SIZE] = entry;
 }
