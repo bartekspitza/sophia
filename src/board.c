@@ -103,6 +103,8 @@ void makeEnPassantMove(Board* board, Move move) {
     *friendlyPawns = setBit(*friendlyPawns, board->epSquare);
 
     board->epSquare = -1;
+    board->turn = board->turn ? 0 : 1;
+    computeOccupancyMasks(board);
 }
 
 void makeCastleMove(Board* board, Move move) {
@@ -154,28 +156,24 @@ void makeCastleMove(Board* board, Move move) {
     // Update castling rights
     board->castling &= board->turn ? ALL_CASTLE_B : ALL_CASTLE_W;
     board->hash ^= CASTLING[board->castling];
+
+    computeOccupancyMasks(board);
+    board->epSquare = -1;
+    board->turn = board->turn ? 0 : 1;
 }
 
 void pushMove(Board* board, Move move) {
-    // Make en passant move
     if (move.toSquare == board->epSquare) {
-        bool isPawnMove = move.pieceType == PAWN_W || move.pieceType == PAWN_B;
+        bool isEnPassantMove = move.pieceType == PAWN_W || move.pieceType == PAWN_B;
 
-        if (isPawnMove) {
+        if (isEnPassantMove) {
             makeEnPassantMove(board, move);
-            computeOccupancyMasks(board);
-            board->turn = board->turn ? 0 : 1;
             return;
         }
     } 
     
-    // Make castle move
     if (move.castle) {
         makeCastleMove(board, move); 
-        computeOccupancyMasks(board);
-        board->epSquare = -1;
-        board->turn = board->turn ? 0 : 1;
-
         return;
     }
 
@@ -183,19 +181,13 @@ void pushMove(Board* board, Move move) {
     board->hash ^= PIECES[move.pieceType][move.fromSquare];
     board->hash ^= PIECES[move.pieceType][move.toSquare];
     board->hash ^= WHITE_TO_MOVE;
-
-    // XOR out the prev ep square
-    if (board->epSquare != -1) {
+    board->hash ^= CASTLING[board->castling]; // XOR out old castling rights
+    if (board->epSquare != -1) {              // XOR out potential ep square
         board->hash ^= EN_PASSANT[board->epSquare];
     }
 
-    // XOR out current castling rights
-    board->hash ^= CASTLING[board->castling];
-
-    // Reset ep-square
-    board->epSquare = -1;
-
     // Set potential ep-square
+    board->epSquare = -1;
     bool starterPawnMoved = (move.pieceType == PAWN_W && (move.fromSquare > A1 && move.fromSquare < H3)) ||
                             (move.pieceType == PAWN_B && (move.fromSquare > A6 && move.fromSquare < H8));
     if (starterPawnMoved) {
