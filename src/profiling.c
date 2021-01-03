@@ -10,6 +10,7 @@
 #include "zobrist.h"
 #include "san.h"
 #include "bitboards.h"
+#include "tt.h"
 
 
 int main(void) {
@@ -28,7 +29,10 @@ int main(void) {
     PVline pvLine;
 
     clock_t start = clock();
-    int eval = search(board, depth, &bestMove, &nodesSearched, &pvLine);
+    for (int i = 0; i < 3;i++) {
+        int eval = search(board, depth, &bestMove, &nodesSearched, &pvLine);
+        memset(TT_TABLE, 0, sizeof(TTEntry) * TT_SIZE);
+    }
     double elapsed = (double) (clock() - start) / CLOCKS_PER_SEC;
     
 

@@ -14,6 +14,7 @@ typedef struct {
 enum NODE_TYPE {EXACT, LOWER, UPPER};
 
 extern TTEntry TT_TABLE[];
+extern const int TT_SIZE;
 
 TTEntry getTTEntry(Bitboard zobrist);
 void addTTEntry(Board board, int eval, Move move, int depth, int beta, int alpha);
