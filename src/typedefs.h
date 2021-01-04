@@ -5,6 +5,7 @@
 #define WHITE 1
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef uint64_t Bitboard;
 typedef struct {
@@ -40,6 +41,8 @@ typedef struct {
     int castle;
     int validation;
     int pieceType;
+    int score;
+    bool exhausted;
 } Move;
 
 enum PIECES {

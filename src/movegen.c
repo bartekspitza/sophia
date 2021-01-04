@@ -559,14 +559,14 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         if (board.castling & K) {
             bool pathClear = (board.occupancy & WHITE_CASTLE_K_PATH) == 0;
             if (pathClear) {
-                Move move = getMove(0, 0, NO_PROMOTION, K, -1);
+                Move move = getMove(E1, G1, NO_PROMOTION, K, -1);
                 addMove
             }
         }
         if (board.castling & Q) {
             bool pathClear = (board.occupancy & WHITE_CASTLE_Q_PATH) == 0;
             if (pathClear) {
-                Move move = getMove(0, 0, NO_PROMOTION, Q, -1);
+                Move move = getMove(E1, C1, NO_PROMOTION, Q, -1);
                 addMove
             }
         }
@@ -574,7 +574,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         if (board.castling & k) {
             bool pathClear = (board.occupancy & BLACK_CASTLE_K_PATH) == 0;
             if (pathClear) {
-                Move move = getMove(0, 0, NO_PROMOTION, k, -1);
+                Move move = getMove(E8, G8, NO_PROMOTION, k, -1);
                 addMove
             }
         }
@@ -582,7 +582,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
             bool pathClear = (board.occupancy & BLACK_CASTLE_Q_PATH) == 0;
 
             if (pathClear) {
-                Move move = getMove(0, 0, NO_PROMOTION, q, -1);
+                Move move = getMove(E8, C8, NO_PROMOTION, q, -1);
                 addMove
             }
         }
