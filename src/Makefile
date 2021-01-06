@@ -12,6 +12,7 @@ profiling: profiling.c
 	./profiling
 	gprof profiling gmon.out > analysis.txt
 	rm profiling
+	rm gmon.out
 
 perft-pg: perft.c
 	@gcc -pg perft.c bitboards.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o perft
