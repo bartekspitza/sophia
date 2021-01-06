@@ -4,9 +4,7 @@ all: uci.c
 	@gcc uci.c  bitboards.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o sophia
 
 perft: perft.c
-	@gcc perft.c bitboards.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o perft
-	@./perft
-	@rm perft
+	gcc perft.c bitboards.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o perft
 
 
 profiling: profiling.c
