@@ -41,6 +41,8 @@ void pushMove_hash_castlingMoveBlackQueen(void);
 void pushMove_hash_kingMoveThatRemovesCastlingRights(void);
 void pushMove_hash_rookMoveThatRemovesCastlingRights(void);
 void pushMove_hash_castlingMoveWhenEpSquareIsSet(void);
+void pushMove_hash_promotionMove(void);
+void pushMove_hash_fullSearchCheck(void);
 
 void gameResult_blackCheckmate(void);
 void gameResult_whiteCheckmate(void);
@@ -87,6 +89,8 @@ int main(void) {
     RUN_TEST(pushMove_hash_kingMoveThatRemovesCastlingRights);
     RUN_TEST(pushMove_hash_rookMoveThatRemovesCastlingRights);
     RUN_TEST(pushMove_hash_castlingMoveWhenEpSquareIsSet);
+    RUN_TEST(pushMove_hash_promotionMove);
+    RUN_TEST(pushMove_hash_fullSearchCheck);
 
     RUN_TEST(gameResult_blackCheckmate);
     RUN_TEST(gameResult_blackStalemate);
@@ -97,6 +101,50 @@ int main(void) {
     RUN_TEST(gameResult_insufficientMaterial_KB);
     RUN_TEST(gameResult_undetermined);
     return UNITY_END();
+}
+
+
+void zobristSearch(Board board, int depth) {
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
+    if (depth == 0) return;
+
+    Move moves[256];
+    int numMoves = pseudoLegalMoves(board, moves);
+
+    for (int i = 0; i < numMoves; i++) {
+        validateMove(board, &moves[i]);
+        if (moves[i].validation == LEGAL) {
+            Board cpy = board;
+            pushMove(&cpy, moves[i]);
+            zobristSearch(cpy, depth-1);
+
+        }
+    }
+}
+void pushMove_hash_fullSearchCheck(void) {
+    Board board;
+
+    setFen(&board, START_FEN);
+    zobristSearch(board, 4);
+
+    setFen(&board, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    zobristSearch(board, 4);
+
+    setFen(&board, "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ");
+    zobristSearch(board, 4);
+
+    setFen(&board, "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 1");
+    zobristSearch(board, 4);
+}
+
+void pushMove_hash_promotionMove(void) {
+    Board board;
+    setFen(&board, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 b kq - 0 1");
+    pushSan(&board, "b2a1q");
+
+    Bitboard correctHash = hash(board);
+    TEST_ASSERT_EQUAL_UINT64(correctHash, board.hash);
 }
 
 void pushMove_hash_castlingMoveWhenEpSquareIsSet(void) {

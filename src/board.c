@@ -179,7 +179,6 @@ void pushMove(Board* board, Move move) {
 
     // Update hash
     board->hash ^= PIECES[move.pieceType][move.fromSquare];
-    board->hash ^= PIECES[move.pieceType][move.toSquare];
     board->hash ^= WHITE_TO_MOVE;
     board->hash ^= CASTLING[board->castling]; // XOR out old castling rights
     if (board->epSquare != -1) {              // XOR out potential ep square
@@ -228,9 +227,12 @@ void pushMove(Board* board, Move move) {
         } else if (*pieceThatMoved == board->king_B) {
             board->blackKingSq = move.toSquare;
         }
+
+        board->hash ^= PIECES[move.pieceType][move.toSquare];
     } else {
         Bitboard* targetMask = &(board->pawn_W) + move.promotion;
         *targetMask = setBit(*targetMask, move.toSquare);
+        board->hash ^= PIECES[move.promotion][move.toSquare];
     }
 
     Bitboard* bb = board->turn ? &(board->pawn_B) : &(board->pawn_W);
