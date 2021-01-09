@@ -9,7 +9,7 @@
 
 int max(int a, int b);
 int min(int a, int b);
-int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched, PVline* pline);
+int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched);
 
 bool movesAreEqual(Move a, Move b) {
     return a.fromSquare == b.fromSquare && a.toSquare == b.toSquare && a.promotion == b.promotion;
@@ -98,16 +98,15 @@ int selectMove(Move moves[], int cmoves) {
     return indx;
 }
 
-int search(Board board, int depth, Move* move, int* nodesSearched, PVline* pv) {
-    int eval = alphabeta(board, move, depth, MIN_EVAL, MAX_EVAL, depth, nodesSearched, pv);
+int search(Board board, int depth, Move* move, int* nodesSearched) {
+    int eval = alphabeta(board, move, depth, MIN_EVAL, MAX_EVAL, depth, nodesSearched);
     return eval;
 }
 
-int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched, PVline* pline) {
+int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched) {
     *nodesSearched += 1;
     int origAlpha = alpha;
 
-    PVline line;
 
     // TT table lookup
     TTEntry entry = getTTEntry(board.hash);
@@ -129,6 +128,7 @@ int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origD
             if (depth == origDepth) {
                 *move = entry.move;
             }
+
             return entry.eval;
         }
     }
@@ -144,10 +144,8 @@ int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origD
             eval += (1 * origDepth - depth) * (board.turn ? 1 : -1);
         }
 
-        pline->length = 0;
         return eval * (board.turn ? 1 : -1);
     } else if (depth == 0) {
-        pline->length = 0;
         return evaluate(board, res) * (board.turn ? 1 : -1);
     }
 
@@ -164,7 +162,7 @@ int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origD
             Board child = board;
             pushMove(&child, moves[nextMove]);
 
-            int childEval = -alphabeta(child, move, depth-1, -beta, -alpha, origDepth, nodesSearched, &line);
+            int childEval = -alphabeta(child, move, depth-1, -beta, -alpha, origDepth, nodesSearched);
 
             if (childEval > eval) {
                 eval = childEval;
@@ -176,11 +174,6 @@ int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origD
 
             if (childEval > alpha) {
                 alpha = childEval;
-
-                // Store the PV line
-                pline->moves[0] = moves[nextMove];
-                memcpy(pline->moves + 1, line.moves, line.length * sizeof(Move));
-                pline->length = line.length + 1;
             }
 
             if (alpha >= beta) {

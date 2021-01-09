@@ -105,21 +105,11 @@ void getBestMove(Board board) {
 
     clock_t start = clock();
     Move bestMove;
-    PVline pvLine;
-    int eval = search(board, depth, &bestMove, &nodesSearched, &pvLine);
+    int eval = search(board, depth, &bestMove, &nodesSearched);
     clock_t end = clock();
     double time_spent = (double) (end - start) / CLOCKS_PER_SEC * 1000;
 
-    printf("info depth %d time %.0f nodes %d score cp %d pv", depth, time_spent, nodesSearched, eval);
-
-    for(int i = 0; i < pvLine.length; i++) {
-        char san[6];
-        memset(san, 0, sizeof(san));
-        moveToSan(pvLine.moves[i], san);
-        printf(" %s", san);
-
-    }
-    printf("\n");
+    printf("info depth %d time %.0f nodes %d score cp %d\n", depth, time_spent, nodesSearched, eval);
 
     char san[6];
     memset(san, 0, sizeof(san));
