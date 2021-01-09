@@ -7,10 +7,8 @@
 #include "board.h"
 #include "fen.h"
 #include "movegen.h"
-#include "search.h"
 #include "san.h"
 #include "bitboards.h"
-#include "utils.h"
 
 typedef unsigned long long u64;
 u64 perft(Board board, int depth, bool divide);

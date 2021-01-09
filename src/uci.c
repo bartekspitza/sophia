@@ -100,20 +100,19 @@ void parsePosition(char *command, Board* board) {
 }
 
 void getBestMove(Board board) {
-    int depth = 6;
+    int depth = 7;
     int nodesSearched = 0;
 
     clock_t start = clock();
-    Move bestMove;
-    int eval = search(board, depth, &bestMove);
+    int eval = search(board, depth);
     clock_t end = clock();
     double time_spent = (double) (end - start) / CLOCKS_PER_SEC * 1000;
 
-    printf("info depth %d time %.0f nodes %d score cp %d\n", depth, time_spent, NODES_SEARCHED, eval);
+    printf("info depth %d time %.0f nodes %d score cp %d\n", depth, time_spent, SEARCH_NODES_SEARCHED, eval);
 
     char san[6];
     memset(san, 0, sizeof(san));
-    moveToSan(bestMove, san);
+    moveToSan(SEARCH_BEST_MOVE, san);
     printf("bestmove %s\n", san);
 }
 

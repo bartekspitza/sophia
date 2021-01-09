@@ -3,9 +3,9 @@
 
 #include "typedefs.h"
 
-extern int NODES_SEARCHED;
-extern Move BEST_MOVE;
+extern int SEARCH_NODES_SEARCHED;
+extern Move SEARCH_BEST_MOVE;
 
-int search(Board board, int depth, Move* move);
+int search(Board board, int depth);
 
 #endif

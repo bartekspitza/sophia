@@ -1,14 +1,14 @@
 .PHONY: all test
 
 all: uci.c
-	@gcc uci.c  bitboards.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o sophia
+	@gcc uci.c  bitboards.c moveorderer.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o sophia
 
 perft: perft.c
-	gcc perft.c bitboards.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o perft
+	gcc perft.c bitboards.c san.c zobrist.c board.c fen.c movegen.c magics.c -o perft
 
 
 profiling: profiling.c
-	@gcc -pg profiling.c bitboards.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o profiling
+	@gcc -pg profiling.c bitboards.c moveorderer.c evaluation.c san.c tt.c zobrist.c search.c board.c fen.c utils.c movegen.c magics.c -o profiling
 	./profiling
 	gprof profiling gmon.out > analysis.txt
 	rm profiling
