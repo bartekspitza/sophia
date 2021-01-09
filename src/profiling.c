@@ -24,13 +24,11 @@ int main(void) {
 
 
     int depth = 6;
-    int nodesSearched = 0;
     Move bestMove;
-    PVline pvLine;
 
     clock_t start = clock();
     for (int i = 0; i < 3;i++) {
-        int eval = search(board, depth, &bestMove, &nodesSearched, &pvLine);
+        int eval = search(board, depth, &bestMove);
         memset(TT_TABLE, 0, sizeof(TTEntry) * TT_SIZE);
     }
     double elapsed = (double) (clock() - start) / CLOCKS_PER_SEC;

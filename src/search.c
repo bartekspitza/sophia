@@ -9,7 +9,7 @@
 
 int max(int a, int b);
 int min(int a, int b);
-int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched);
+int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origDepth);
 
 bool movesAreEqual(Move a, Move b) {
     return a.fromSquare == b.fromSquare && a.toSquare == b.toSquare && a.promotion == b.promotion;
@@ -39,6 +39,7 @@ int ATTACKERS[] = {
 
 const int MAX_MOVE_SCORE = 100000;
 const int MVV_LVA_PAWN_EXCHANGE = (100 * 16) - 100;
+int NODES_SEARCHED = 0;
 
 void scoreMoves(Board board, TTEntry entry, Move moves[], int cmoves) {
     Move pvMove;
@@ -98,13 +99,14 @@ int selectMove(Move moves[], int cmoves) {
     return indx;
 }
 
-int search(Board board, int depth, Move* move, int* nodesSearched) {
-    int eval = alphabeta(board, move, depth, MIN_EVAL, MAX_EVAL, depth, nodesSearched);
+int search(Board board, int depth, Move* move) {
+    NODES_SEARCHED = 0;
+    int eval = alphabeta(board, move, depth, MIN_EVAL, MAX_EVAL, depth);
     return eval;
 }
 
-int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origDepth, int* nodesSearched) {
-    *nodesSearched += 1;
+int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origDepth) {
+    NODES_SEARCHED++;
     int origAlpha = alpha;
 
 
@@ -162,7 +164,7 @@ int alphabeta(Board board, Move* move, int depth, int alpha, int beta, int origD
             Board child = board;
             pushMove(&child, moves[nextMove]);
 
-            int childEval = -alphabeta(child, move, depth-1, -beta, -alpha, origDepth, nodesSearched);
+            int childEval = -alphabeta(child, move, depth-1, -beta, -alpha, origDepth);
 
             if (childEval > eval) {
                 eval = childEval;

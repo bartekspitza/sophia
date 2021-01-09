@@ -105,11 +105,11 @@ void getBestMove(Board board) {
 
     clock_t start = clock();
     Move bestMove;
-    int eval = search(board, depth, &bestMove, &nodesSearched);
+    int eval = search(board, depth, &bestMove);
     clock_t end = clock();
     double time_spent = (double) (end - start) / CLOCKS_PER_SEC * 1000;
 
-    printf("info depth %d time %.0f nodes %d score cp %d\n", depth, time_spent, nodesSearched, eval);
+    printf("info depth %d time %.0f nodes %d score cp %d\n", depth, time_spent, NODES_SEARCHED, eval);
 
     char san[6];
     memset(san, 0, sizeof(san));
