@@ -2,6 +2,8 @@
 #include "fen.h"
 #include "board.h"
 #include "zobrist.h"
+#include "utils.h"
+#include "movegen.h"
 
 Bitboard* pieceBitboard(Board* board, int pieceType) {
     return (Bitboard*) board + pieceType;
@@ -140,4 +142,8 @@ void setFen(Board* board, char* fen) {
 
     // Set hash
     board->hash = hash(*board);
+
+    // Initialize attack mask through an usused movegeneration
+    Move moves[256];
+    legalMoves(board, moves);
 }
