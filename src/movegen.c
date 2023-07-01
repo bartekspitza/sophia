@@ -280,35 +280,24 @@ Bitboard getRookAttacks(int square, Bitboard occupancy) {
 
 Bitboard getKingMask(Board board) {
     int kingSquare = board.turn ? board.whiteKingSq : board.blackKingSq;
-
-    Bitboard kingMoves = KING_MOVEMENT[kingSquare];
-    Bitboard occ = board.turn ? board.occupancyWhite : board.occupancyBlack;
-    return kingMoves ^ (kingMoves & occ);
+    Bitboard opponentOccupancy = board.turn ? board.occupancyWhite : board.occupancyBlack;
+    return KING_MOVEMENT[kingSquare] & ~opponentOccupancy;
 }
 
-void pawnSingleAndDblPushes(Board board, Bitboard* singlePush, Bitboard* doublePush) {
-    Bitboard single;
-    Bitboard dbl;
+/**
+ * Computes pawn moves, single and double pushes
+*/
+void pawnSingleAndDblPushes(Board board, Bitboard* single, Bitboard* dbl) {
+    *single = board.turn ? board.pawn_W << 8 : board.pawn_B >> 8;
+    *single = *single & ~board.occupancy;
 
-    if (board.turn) {
-        single = board.pawn_W << 8;
-    } else {
-        single = board.pawn_B >> 8;
-    }
-    single ^= single & board.occupancy;
+    *dbl = board.turn ? (board.pawn_W & PAWN_START_WHITE) << 16 : (board.pawn_B & PAWN_START_BLACK) >> 16;
+    *dbl = *dbl & ~board.occupancy;
 
-    if (board.turn) {
-        dbl = (board.pawn_W & PAWN_START_WHITE) << 16;
-    } else {
-        dbl = (board.pawn_B & PAWN_START_BLACK) >> 16;
-    }
-    dbl ^= dbl & board.occupancy;
-    dbl = board.turn ? dbl >> 8 : dbl << 8;
-    dbl &= single;
-    dbl = board.turn ? dbl << 8 : dbl >> 8;
-
-    *singlePush = single;
-    *doublePush = dbl;
+    // Double pushes can't jump over pieces
+    *dbl = board.turn ? *dbl >> 8 : *dbl << 8;
+    *dbl &= *single;
+    *dbl = board.turn ? *dbl << 8 : *dbl >> 8;
 }
 
 void addPawnAdvanceWithPossiblePromos(Board board, bool isPromoting, int turn, int from, int to, Move moves[], int* indx) {
@@ -318,11 +307,12 @@ void addPawnAdvanceWithPossiblePromos(Board board, bool isPromoting, int turn, i
             moves[*indx] = move;
             *indx += 1;
         }
-    } else {
-        Move move = getMove(from, to, NO_PROMOTION, NOT_CASTLE, board.turn ? PAWN_W : PAWN_B);
-        moves[*indx] = move;
-        *indx += 1;
+        return;
     }
+
+    Move move = getMove(from, to, NO_PROMOTION, NOT_CASTLE, board.turn ? PAWN_W : PAWN_B);
+    moves[*indx] = move;
+    *indx += 1;
 }
 
 
@@ -430,7 +420,7 @@ bool isSquareAttacked(Board board, int square) {
 int pseudoLegalMoves(Board board, Move moves[]) {
     int length = 0;
 
-    // Color relative variables
+    // Already known
     int kingSquare = board.turn ? board.whiteKingSq : board.blackKingSq;
     Bitboard friendlyOccupancy = board.turn ? board.occupancyWhite : board.occupancyBlack;
     Bitboard bishopBitboard = board.turn ? board.bishop_W : board.bishop_B;
@@ -439,21 +429,19 @@ int pseudoLegalMoves(Board board, Move moves[]) {
     Bitboard knightBitboard = board.turn ? board.knight_W : board.knight_B;
     Bitboard pawnMask = board.turn ? board.pawn_W : board.pawn_B;
  
+    // Generate all pieces movement, starting with pawns
     Bitboard singlePush;
     Bitboard doublePush;
-    pawnSingleAndDblPushes(board, &singlePush, &doublePush);
-    Bitboard kingMovesMask = getKingMask(board);
+    pawnSingleAndDblPushes(board, &singlePush, &doublePush); // Single and double pawn pushes
 
+    // Captures
     Bitboard epSquare = board.epSquare == -1 ? 0LL : SQUARE_BITBOARDS[board.epSquare];
-    int startPieceType = board.turn ? PAWN_W : PAWN_B;
-
-    // Pawn attacks
     while (pawnMask) {
         int sq = __builtin_ctzll(pawnMask);
         bool isPromoting = board.turn ? (SQUARE_BITBOARDS[sq] & RANK_7) : (SQUARE_BITBOARDS[sq] & RANK_1);
 
+        Bitboard occ = epSquare | (board.turn ? board.occupancyBlack : board.occupancyWhite);
         if (board.turn) {
-            Bitboard occ = board.occupancyBlack | epSquare;
             if (PAWN_W_ATTACKS_EAST[sq] & occ) {
                 int toSquare = sq + 7;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
@@ -463,7 +451,6 @@ int pseudoLegalMoves(Board board, Move moves[]) {
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
         } else {
-            Bitboard occ = board.occupancyWhite | epSquare;
             if (PAWN_B_ATTACKS_EAST[sq] & occ) {
                 int toSquare = sq - 7;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
@@ -476,6 +463,8 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         pawnMask &= pawnMask - 1;
     }
 
+    Bitboard kingMovesMask = getKingMask(board);
+
     while (singlePush) {
         int sq = __builtin_ctzll(singlePush);
         int fromSquare = board.turn ? sq-8 : sq+8;
@@ -484,6 +473,7 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         singlePush &= singlePush - 1;
     }
 
+    int startPieceType = board.turn ? PAWN_W : PAWN_B;
     while (doublePush) {
         int sq = __builtin_ctzll(doublePush);
         int fromSquare = board.turn ? sq-8*2 : sq+8*2;
