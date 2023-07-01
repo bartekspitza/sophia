@@ -361,6 +361,9 @@ void initMoveGeneration(void) {
     initBishopRookAttackTables();
 }
 
+/**
+ * Whether the given square is attacked by the opponent
+*/
 bool isSquareAttacked(Board board, int square) {
     Bitboard sqBb = SQUARE_BITBOARDS[square];
     Bitboard pawn = board.turn ? board.pawn_B : board.pawn_W;
