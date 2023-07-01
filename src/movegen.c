@@ -456,27 +456,27 @@ int legalMoves(Board* board, Move moves[]) {
         Bitboard occ = epSquare | (board->turn ? board->occupancyBlack : board->occupancyWhite);
         if (board->turn) {
             Bitboard eastAttacks = PAWN_W_ATTACKS_EAST[sq] & occ;
+            attackMask |= PAWN_W_ATTACKS_EAST[sq];
+            attackMask |= PAWN_W_ATTACKS_WEST[sq];
             if (eastAttacks) {
-                attackMask |= PAWN_W_ATTACKS_EAST[sq];
                 int toSquare = sq + 7;
                 addPawnAdvanceWithPossiblePromos(*board, isPromoting, board->turn, sq, toSquare, moves, &length);
             }
             Bitboard westAttacks = PAWN_W_ATTACKS_WEST[sq] & occ;
             if (westAttacks) {
-                attackMask |= PAWN_W_ATTACKS_WEST[sq];
                 int toSquare = sq + 9;
                 addPawnAdvanceWithPossiblePromos(*board, isPromoting, board->turn, sq, toSquare, moves, &length);
             }
         } else {
             Bitboard eastAttacks = PAWN_B_ATTACKS_EAST[sq] & occ;
+            attackMask |= PAWN_B_ATTACKS_EAST[sq];
+            attackMask |= PAWN_B_ATTACKS_WEST[sq];
             if (eastAttacks) {
-                attackMask |= PAWN_B_ATTACKS_EAST[sq];
                 int toSquare = sq - 7;
                 addPawnAdvanceWithPossiblePromos(*board, isPromoting, board->turn, sq, toSquare, moves, &length);
             }
             Bitboard westAttacks = PAWN_B_ATTACKS_WEST[sq] & occ;
             if (westAttacks) {
-                attackMask |= PAWN_B_ATTACKS_WEST[sq];
                 int toSquare = sq - 9;
                 addPawnAdvanceWithPossiblePromos(*board, isPromoting, board->turn, sq, toSquare, moves, &length);
             }
@@ -485,7 +485,7 @@ int legalMoves(Board* board, Move moves[]) {
     }
 
     Bitboard kingMovesMask = getKingMask(*board);
-    attackMask |= kingMovesMask;
+    attackMask |= KING_MOVEMENT[kingSquare];
 
     while (singlePush) {
         int sq = __builtin_ctzll(singlePush);
