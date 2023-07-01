@@ -428,79 +428,79 @@ bool isSquareAttacked(Board board, int square) {
 /**
 * Generates all legal moves for the given board
 */
-int legalMoves(Board board, Move moves[]) {
+int legalMoves(Board* board, Move moves[]) {
     int length = 0;
 
     // Already known
-    int kingSquare = board.turn ? board.whiteKingSq : board.blackKingSq;
-    Bitboard friendlyOccupancy = board.turn ? board.occupancyWhite : board.occupancyBlack;
-    Bitboard bishopBitboard = board.turn ? board.bishop_W : board.bishop_B;
-    Bitboard rookBitboard = board.turn ? board.rook_W : board.rook_B;
-    Bitboard queenBitboard = board.turn ? board.queen_W : board.queen_B;
-    Bitboard knightBitboard = board.turn ? board.knight_W : board.knight_B;
-    Bitboard pawnMask = board.turn ? board.pawn_W : board.pawn_B;
+    int kingSquare = board->turn ? board->whiteKingSq : board->blackKingSq;
+    Bitboard friendlyOccupancy = board->turn ? board->occupancyWhite : board->occupancyBlack;
+    Bitboard bishopBitboard = board->turn ? board->bishop_W : board->bishop_B;
+    Bitboard rookBitboard = board->turn ? board->rook_W : board->rook_B;
+    Bitboard queenBitboard = board->turn ? board->queen_W : board->queen_B;
+    Bitboard knightBitboard = board->turn ? board->knight_W : board->knight_B;
+    Bitboard pawnMask = board->turn ? board->pawn_W : board->pawn_B;
 
     Bitboard attackMask = 0;
  
     // Generate all pieces movement, starting with pawns
     Bitboard singlePush;
     Bitboard doublePush;
-    pawnSingleAndDblPushes(board, &singlePush, &doublePush); // Single and double pawn pushes
+    pawnSingleAndDblPushes(*board, &singlePush, &doublePush); // Single and double pawn pushes
 
     // Captures
-    Bitboard epSquare = board.epSquare == -1 ? 0LL : SQUARE_BITBOARDS[board.epSquare];
+    Bitboard epSquare = board->epSquare == -1 ? 0LL : SQUARE_BITBOARDS[board->epSquare];
     while (pawnMask) {
         int sq = __builtin_ctzll(pawnMask);
-        bool isPromoting = board.turn ? (SQUARE_BITBOARDS[sq] & RANK_7) : (SQUARE_BITBOARDS[sq] & RANK_1);
+        bool isPromoting = board->turn ? (SQUARE_BITBOARDS[sq] & RANK_7) : (SQUARE_BITBOARDS[sq] & RANK_1);
 
-        Bitboard occ = epSquare | (board.turn ? board.occupancyBlack : board.occupancyWhite);
-        if (board.turn) {
+        Bitboard occ = epSquare | (board->turn ? board->occupancyBlack : board->occupancyWhite);
+        if (board->turn) {
             Bitboard eastAttacks = PAWN_W_ATTACKS_EAST[sq] & occ;
             if (eastAttacks) {
                 attackMask |= PAWN_W_ATTACKS_EAST[sq];
                 int toSquare = sq + 7;
-                addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
+                addPawnAdvanceWithPossiblePromos(*board, isPromoting, board->turn, sq, toSquare, moves, &length);
             }
             Bitboard westAttacks = PAWN_W_ATTACKS_WEST[sq] & occ;
             if (westAttacks) {
                 attackMask |= PAWN_W_ATTACKS_WEST[sq];
                 int toSquare = sq + 9;
-                addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
+                addPawnAdvanceWithPossiblePromos(*board, isPromoting, board->turn, sq, toSquare, moves, &length);
             }
         } else {
             Bitboard eastAttacks = PAWN_B_ATTACKS_EAST[sq] & occ;
             if (eastAttacks) {
                 attackMask |= PAWN_B_ATTACKS_EAST[sq];
                 int toSquare = sq - 7;
-                addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
+                addPawnAdvanceWithPossiblePromos(*board, isPromoting, board->turn, sq, toSquare, moves, &length);
             }
             Bitboard westAttacks = PAWN_B_ATTACKS_WEST[sq] & occ;
             if (westAttacks) {
                 attackMask |= PAWN_B_ATTACKS_WEST[sq];
                 int toSquare = sq - 9;
-                addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
+                addPawnAdvanceWithPossiblePromos(*board, isPromoting, board->turn, sq, toSquare, moves, &length);
             }
         }
         pawnMask &= pawnMask - 1;
     }
 
-    Bitboard kingMovesMask = getKingMask(board);
+    Bitboard kingMovesMask = getKingMask(*board);
     attackMask |= kingMovesMask;
 
     while (singlePush) {
         int sq = __builtin_ctzll(singlePush);
-        int fromSquare = board.turn ? sq-8 : sq+8;
-        bool isPromoting = board.turn ? (fromSquare >= H7 && fromSquare <= A7) : (fromSquare >= H2 && fromSquare <= A2);
-        addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, fromSquare, sq, moves, &length);
+        int fromSquare = board->turn ? sq-8 : sq+8;
+        bool isPromoting = board->turn ? (fromSquare >= H7 && fromSquare <= A7) : (fromSquare >= H2 && fromSquare <= A2);
+        addPawnAdvanceWithPossiblePromos(*board, isPromoting, board->turn, fromSquare, sq, moves, &length);
         singlePush &= singlePush - 1;
     }
 
-    int startPieceType = board.turn ? PAWN_W : PAWN_B;
+    int startPieceType = board->turn ? PAWN_W : PAWN_B;
     while (doublePush) {
         int sq = __builtin_ctzll(doublePush);
-        int fromSquare = board.turn ? sq-8*2 : sq+8*2;
+        int fromSquare = board->turn ? sq-8*2 : sq+8*2;
         Move move = getMove(fromSquare, sq, NO_PROMOTION, NOT_CASTLE, startPieceType + PAWN_W);
-        validateMove(board, &move);
+        validateMove(*board, &move);
         if (move.validation == LEGAL) {
             addMove
         }
@@ -510,7 +510,7 @@ int legalMoves(Board board, Move moves[]) {
     while (kingMovesMask) {
         int sq = __builtin_ctzll(kingMovesMask);
         Move move = getMove(kingSquare, sq, NO_PROMOTION, NOT_CASTLE, startPieceType + KING_W);
-        validateMove(board, &move);
+        validateMove(*board, &move);
         if (move.validation == LEGAL) {
             addMove
         }
@@ -518,13 +518,14 @@ int legalMoves(Board board, Move moves[]) {
     }
     while (bishopBitboard) {
         int sq = __builtin_ctzll(bishopBitboard);
-        Bitboard attacks = getBishopAttacks(sq, board.occupancy);
+        Bitboard attacks = getBishopAttacks(sq, board->occupancy);
+        attackMask |= attacks;
         attacks = attacks & ~friendlyOccupancy;
 
         while (attacks) {
             int indx = __builtin_ctzll(attacks);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + BISHOP_W);
-            validateMove(board, &move);
+            validateMove(*board, &move);
             if (move.validation == LEGAL) {
                 addMove
             }
@@ -534,13 +535,14 @@ int legalMoves(Board board, Move moves[]) {
     }
     while (rookBitboard) {
         int sq = __builtin_ctzll(rookBitboard);
-        Bitboard attacks = getRookAttacks(sq, board.occupancy);
+        Bitboard attacks = getRookAttacks(sq, board->occupancy);
+        attackMask |= attacks;
         attacks = attacks & ~friendlyOccupancy;
 
         while (attacks) {
             int indx = __builtin_ctzll(attacks);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + ROOK_W);
-            validateMove(board, &move);
+            validateMove(*board, &move);
             if (move.validation == LEGAL) {
                 addMove
             }
@@ -551,15 +553,16 @@ int legalMoves(Board board, Move moves[]) {
     }
     while (queenBitboard) {
         int sq = __builtin_ctzll(queenBitboard);
-        Bitboard rookAttacks = getRookAttacks(sq, board.occupancy);
-        Bitboard bishopAttacks = getBishopAttacks(sq, board.occupancy);
+        Bitboard rookAttacks = getRookAttacks(sq, board->occupancy);
+        Bitboard bishopAttacks = getBishopAttacks(sq, board->occupancy);
         Bitboard attacks = bishopAttacks | rookAttacks;
+        attackMask |= attacks;
         attacks = attacks & ~friendlyOccupancy;
 
         while (attacks) {
             int indx = __builtin_ctzll(attacks);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + QUEEN_W);
-            validateMove(board, &move);
+            validateMove(*board, &move);
             if (move.validation == LEGAL) {
                 addMove
             }
@@ -570,12 +573,13 @@ int legalMoves(Board board, Move moves[]) {
     }
     while (knightBitboard) {
         int sq = __builtin_ctzll(knightBitboard);
+        attackMask |= KNIGHT_MOVEMENT[sq];
         Bitboard target = KNIGHT_MOVEMENT[sq] & ~friendlyOccupancy;
 
         while (target) {
             int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + KNIGHT_W);
-            validateMove(board, &move);
+            validateMove(*board, &move);
             if (move.validation == LEGAL) {
                 addMove
             }
@@ -585,44 +589,44 @@ int legalMoves(Board board, Move moves[]) {
     }
 
     // Castling
-    if (board.turn) {
-        if (board.castling & K) {
-            bool pathClear = (board.occupancy & WHITE_CASTLE_K_PATH) == 0;
+    if (board->turn) {
+        if (board->castling & K) {
+            bool pathClear = (board->occupancy & WHITE_CASTLE_K_PATH) == 0;
             if (pathClear) {
                 Move move = getMove(E1, G1, NO_PROMOTION, K, -1);
-                validateMove(board, &move);
+                validateMove(*board, &move);
                 if (move.validation == LEGAL) {
                     addMove
                 }
             }
         }
-        if (board.castling & Q) {
-            bool pathClear = (board.occupancy & WHITE_CASTLE_Q_PATH) == 0;
+        if (board->castling & Q) {
+            bool pathClear = (board->occupancy & WHITE_CASTLE_Q_PATH) == 0;
             if (pathClear) {
                 Move move = getMove(E1, C1, NO_PROMOTION, Q, -1);
-                validateMove(board, &move);
+                validateMove(*board, &move);
                 if (move.validation == LEGAL) {
                     addMove
                 }
             }
         }
     } else {
-        if (board.castling & k) {
-            bool pathClear = (board.occupancy & BLACK_CASTLE_K_PATH) == 0;
+        if (board->castling & k) {
+            bool pathClear = (board->occupancy & BLACK_CASTLE_K_PATH) == 0;
             if (pathClear) {
                 Move move = getMove(E8, G8, NO_PROMOTION, k, -1);
-                validateMove(board, &move);
+                validateMove(*board, &move);
                 if (move.validation == LEGAL) {
                     addMove
                 }
             }
         }
-        if (board.castling & q) {
-            bool pathClear = (board.occupancy & BLACK_CASTLE_Q_PATH) == 0;
+        if (board->castling & q) {
+            bool pathClear = (board->occupancy & BLACK_CASTLE_Q_PATH) == 0;
 
             if (pathClear) {
                 Move move = getMove(E8, C8, NO_PROMOTION, q, -1);
-                validateMove(board, &move);
+                validateMove(*board, &move);
                 if (move.validation == LEGAL) {
                     addMove
                 }
@@ -630,5 +634,6 @@ int legalMoves(Board board, Move moves[]) {
         }
     }
 
+    board->attacks = attackMask;
     return length;
 }

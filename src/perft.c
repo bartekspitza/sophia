@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 u64 perft(Board board, int depth, bool divide) {
   u64 nodes = 0;
   Move moves[256];
-  int numMoves = legalMoves(board, moves);
+  int numMoves = legalMoves(&board, moves);
 
   if (depth == 1)  {
     int legal = 0;

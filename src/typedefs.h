@@ -32,7 +32,7 @@ typedef struct {
     Bitboard occupancyWhite;
     Bitboard occupancyBlack;
     Bitboard hash;
-    Bitboard opponentAttack;
+    Bitboard attacks; // The attack mask of the other side, i.e. when it's white's turn, this is the black attack mask
 } Board;
 
 typedef struct {

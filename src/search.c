@@ -58,7 +58,7 @@ int alphabeta(Board board, int depth, int alpha, int beta) {
     }
 
     Move moves[256];
-    int cmoves = legalMoves(board, moves);
+    int cmoves = legalMoves(&board, moves);
 
     int res = result(board, moves, cmoves);
     if (res) {
