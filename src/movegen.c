@@ -508,7 +508,7 @@ int legalMoves(Board board, Move moves[]) {
     while (bishopBitboard) {
         int sq = __builtin_ctzll(bishopBitboard);
         Bitboard target = getBishopAttacks(sq, board.occupancy);
-        target ^= target & friendlyOccupancy;
+        target = target & ~friendlyOccupancy;
 
         while (target) {
             int indx = __builtin_ctzll(target);
@@ -524,7 +524,7 @@ int legalMoves(Board board, Move moves[]) {
     while (rookBitboard) {
         int sq = __builtin_ctzll(rookBitboard);
         Bitboard target = getRookAttacks(sq, board.occupancy);
-        target ^= target & friendlyOccupancy;
+        target = target & ~friendlyOccupancy;
 
         while (target) {
             int indx = __builtin_ctzll(target);
@@ -543,7 +543,7 @@ int legalMoves(Board board, Move moves[]) {
         Bitboard rookAttacks = getRookAttacks(sq, board.occupancy);
         Bitboard bishopAttacks = getBishopAttacks(sq, board.occupancy);
         Bitboard target = bishopAttacks | rookAttacks;
-        target ^= target & friendlyOccupancy;
+        target = target & ~friendlyOccupancy;
 
         while (target) {
             int indx = __builtin_ctzll(target);
@@ -559,7 +559,7 @@ int legalMoves(Board board, Move moves[]) {
     }
     while (knightBitboard) {
         int sq = __builtin_ctzll(knightBitboard);
-        Bitboard target = KNIGHT_MOVEMENT[sq] ^ (KNIGHT_MOVEMENT[sq] & friendlyOccupancy);
+        Bitboard target = KNIGHT_MOVEMENT[sq] & ~friendlyOccupancy;
 
         while (target) {
             int indx = __builtin_ctzll(target);
