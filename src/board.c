@@ -60,7 +60,7 @@ int result(Board board, Move legal[], int length) {
     bool noLegalMoves = length == 0;
 
     if (noLegalMoves) {
-        bool kingInCheck = isSquareAttacked(board, board.turn ? board.whiteKingSq : board.blackKingSq);
+        Bitboard kingInCheck = SQUARE_BITBOARDS[board.turn ? board.whiteKingSq : board.blackKingSq] && board.attacks;
         if (kingInCheck) {
             return board.turn ? BLACK_WIN : WHITE_WIN;
         }

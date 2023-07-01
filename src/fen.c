@@ -20,6 +20,64 @@ void reset(Board* board) {
     board->epSquare = -1;
 }
 
+/**
+ * Whether the given square is attacked by the opponent
+*/
+Bitboard computeAttacks(Board board) {
+    Bitboard attackMask = 0;
+
+    Bitboard pawn = board.turn ? board.pawn_B : board.pawn_W;
+    Bitboard king = board.turn ? board.king_B : board.king_W;
+    Bitboard knight = board.turn ? board.knight_B : board.knight_W;
+    Bitboard bishop = board.turn ? board.bishop_B : board.bishop_W;
+    Bitboard rook = board.turn ? board.rook_B : board.rook_W;
+    Bitboard queen = board.turn ? board.queen_B : board.queen_W;
+
+    while (queen) {
+        int sq = __builtin_ctzl(queen);
+        Bitboard attacks = getBishopAttacks(sq, board.occupancy);
+        attacks |= getRookAttacks(sq, board.occupancy);
+        attackMask |= attacks;
+        queen &= queen - 1;
+    }
+    while (bishop) {
+        int sq = __builtin_ctzl(bishop);
+        Bitboard attacks = getBishopAttacks(sq, board.occupancy);
+        attackMask |= attacks;
+        bishop &= bishop - 1;
+    }
+    while (rook) {
+        int sq = __builtin_ctzl(rook);
+        Bitboard attacks = getRookAttacks(sq, board.occupancy);
+        attackMask |= attacks;
+        rook &= rook - 1;
+    }
+    while (knight) {
+        int sq = __builtin_ctzl(knight);
+        attackMask |= KNIGHT_MOVEMENT[sq];
+        knight &= knight - 1;
+    }
+    while (pawn) {
+        int sq = __builtin_ctzl(pawn);
+
+        if (board.turn) {
+            attackMask |= PAWN_B_ATTACKS_EAST[sq];
+            attackMask |= PAWN_B_ATTACKS_WEST[sq];
+        } else {
+            attackMask |= PAWN_W_ATTACKS_EAST[sq];
+            attackMask |= PAWN_W_ATTACKS_WEST[sq];
+        }
+        pawn &= pawn - 1;
+    }
+    while (king) {
+        int sq = __builtin_ctzll(king);
+        attackMask |= KING_MOVEMENT[sq];
+        king &= king - 1;
+    }
+
+    return attackMask;
+}
+
 void setFen(Board* board, char* fen) {
     reset(board);
 
@@ -144,6 +202,5 @@ void setFen(Board* board, char* fen) {
     board->hash = hash(*board);
 
     // Initialize attack mask through an usused movegeneration
-    Move moves[256];
-    legalMoves(board, moves);
+    board->attacks = computeAttacks(*board);
 }
