@@ -284,6 +284,38 @@ Bitboard getKingMask(Board board) {
     return KING_MOVEMENT[kingSquare] & ~opponentOccupancy;
 }
 
+void validateMove(Board board, Move* move) {
+    if (move->castle) {
+        // Does king travel over attacked squares?
+        int sq;
+        if (move->castle == K) sq = F1;
+        if (move->castle == Q) sq = D1;
+        if (move->castle == k) sq = F8;
+        if (move->castle == q) sq = D8;
+        bool attackedTravel = isSquareAttacked(board, sq);
+        if (attackedTravel) {
+            move->validation = ILLEGAL;
+            return;
+        }
+
+        // Is king in check?
+        bool isInCheck = isSquareAttacked(board, board.turn ? board.whiteKingSq : board.blackKingSq);
+        if (isInCheck) {
+            move->validation = ILLEGAL;
+            return;
+        }
+    }
+
+    Board cpy = board;
+    pushMove(&cpy, *move);
+
+    int kingSquare = cpy.turn ? cpy.blackKingSq : cpy.whiteKingSq;
+    cpy.turn = cpy.turn ? 0 : 1;
+    bool isInCheckAfterMove = isSquareAttacked(cpy, kingSquare);
+
+    move->validation = isInCheckAfterMove ? ILLEGAL : LEGAL;
+}
+
 /**
  * Computes pawn moves, single and double pushes
 */
@@ -326,38 +358,6 @@ void addPawnAdvanceWithPossiblePromos(Board board, bool isPromoting, int turn, i
 Visible methods
 
 ---------------------------------------------*/
-
-void validateMove(Board board, Move* move) {
-    if (move->castle) {
-        // Does king travel over attacked squares?
-        int sq;
-        if (move->castle == K) sq = F1;
-        if (move->castle == Q) sq = D1;
-        if (move->castle == k) sq = F8;
-        if (move->castle == q) sq = D8;
-        bool attackedTravel = isSquareAttacked(board, sq);
-        if (attackedTravel) {
-            move->validation = ILLEGAL;
-            return;
-        }
-
-        // Is king in check?
-        bool isInCheck = isSquareAttacked(board, board.turn ? board.whiteKingSq : board.blackKingSq);
-        if (isInCheck) {
-            move->validation = ILLEGAL;
-            return;
-        }
-    }
-
-    Board cpy = board;
-    pushMove(&cpy, *move);
-
-    int kingSquare = cpy.turn ? cpy.blackKingSq : cpy.whiteKingSq;
-    cpy.turn = cpy.turn ? 0 : 1;
-    bool isInCheckAfterMove = isSquareAttacked(cpy, kingSquare);
-
-    move->validation = isInCheckAfterMove ? ILLEGAL : LEGAL;
-}
 
 void initMoveGeneration(void) {
     initKnightMovementTable();

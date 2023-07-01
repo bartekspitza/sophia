@@ -12,6 +12,5 @@ void initMoveGeneration(void);
 int legalMoves(Board board, Move moves[]);
 int bitScanForward(Bitboard* bb);
 bool isSquareAttacked(Board board, int square);
-void validateMove(Board board, Move* move);
 
 #endif
