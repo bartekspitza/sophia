@@ -66,13 +66,12 @@ int main(int argc, char* argv[]) {
 u64 perft(Board board, int depth, bool divide) {
   u64 nodes = 0;
   Move moves[256];
-  int numMoves = pseudoLegalMoves(board, moves);
+  int numMoves = legalMoves(board, moves);
 
   if (depth == 1)  {
     int legal = 0;
 
     for (int i = 0; i < numMoves; i++) {
-      validateMove(board, &moves[i]);
       if (moves[i].validation == LEGAL) legal++;
     }
 
@@ -80,7 +79,6 @@ u64 perft(Board board, int depth, bool divide) {
   }
 
   for (int i = 0; i < numMoves; i++) {
-    validateMove(board, &moves[i]);
     if (moves[i].validation == LEGAL) {
       // Copy-make
       Board cpy = board;

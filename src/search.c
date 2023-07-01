@@ -58,7 +58,7 @@ int alphabeta(Board board, int depth, int alpha, int beta) {
     }
 
     Move moves[256];
-    int cmoves = pseudoLegalMoves(board, moves);
+    int cmoves = legalMoves(board, moves);
 
     int res = result(board, moves, cmoves);
     if (res) {
@@ -78,10 +78,6 @@ int alphabeta(Board board, int depth, int alpha, int beta) {
     score_moves(board, entry, moves, cmoves);
 
     while (nextMove = select_move(moves, cmoves), nextMove != -1) {
-        // Validate move if it hasn't
-        if (moves[nextMove].validation == NOT_VALIDATED)
-            validateMove(board, &moves[nextMove]);
-
         if (moves[nextMove].validation == LEGAL) {
             Board child = board;
             pushMove(&child, moves[nextMove]);

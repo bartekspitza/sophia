@@ -9,7 +9,7 @@ extern Bitboard PAWN_START_WHITE;
 extern Bitboard PAWN_START_BLACK;
 
 void initMoveGeneration(void);
-int pseudoLegalMoves(Board board, Move moves[]);
+int legalMoves(Board board, Move moves[]);
 int bitScanForward(Bitboard* bb);
 bool isSquareAttacked(Board board, int square);
 void validateMove(Board board, Move* move);

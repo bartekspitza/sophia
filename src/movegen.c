@@ -304,6 +304,9 @@ void addPawnAdvanceWithPossiblePromos(Board board, bool isPromoting, int turn, i
     if (isPromoting) {
         for (int i = 0; i < 4; i++) {
             Move move = getMove(from, to, turn ? WHITE_PROMOTIONS[i] : BLACK_PROMOTIONS[i], NOT_CASTLE, board.turn ? PAWN_W : PAWN_B);
+            validateMove(board, &move);
+            if (move.validation == ILLEGAL) continue;
+
             moves[*indx] = move;
             *indx += 1;
         }
@@ -311,6 +314,8 @@ void addPawnAdvanceWithPossiblePromos(Board board, bool isPromoting, int turn, i
     }
 
     Move move = getMove(from, to, NO_PROMOTION, NOT_CASTLE, board.turn ? PAWN_W : PAWN_B);
+    validateMove(board, &move);
+    if (move.validation == ILLEGAL) return;
     moves[*indx] = move;
     *indx += 1;
 }
@@ -420,7 +425,10 @@ bool isSquareAttacked(Board board, int square) {
     return false;
 }
 
-int pseudoLegalMoves(Board board, Move moves[]) {
+/**
+* Generates all legal moves for the given board
+*/
+int legalMoves(Board board, Move moves[]) {
     int length = 0;
 
     // Already known
@@ -481,14 +489,20 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         int sq = __builtin_ctzll(doublePush);
         int fromSquare = board.turn ? sq-8*2 : sq+8*2;
         Move move = getMove(fromSquare, sq, NO_PROMOTION, NOT_CASTLE, startPieceType + PAWN_W);
-        addMove
+        validateMove(board, &move);
+        if (move.validation == LEGAL) {
+            addMove
+        }
         doublePush &= doublePush - 1;
     }
 
     while (kingMovesMask) {
         int sq = __builtin_ctzll(kingMovesMask);
         Move move = getMove(kingSquare, sq, NO_PROMOTION, NOT_CASTLE, startPieceType + KING_W);
-        addMove
+        validateMove(board, &move);
+        if (move.validation == LEGAL) {
+            addMove
+        }
         kingMovesMask &= kingMovesMask - 1;
     }
     while (bishopBitboard) {
@@ -499,7 +513,10 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         while (target) {
             int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + BISHOP_W);
-            addMove
+            validateMove(board, &move);
+            if (move.validation == LEGAL) {
+                addMove
+            }
             target &= target - 1;
         }
         bishopBitboard &= bishopBitboard - 1;
@@ -512,7 +529,10 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         while (target) {
             int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + ROOK_W);
-            addMove
+            validateMove(board, &move);
+            if (move.validation == LEGAL) {
+                addMove
+            }
             target &= target - 1;
         }
 
@@ -528,7 +548,10 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         while (target) {
             int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + QUEEN_W);
-            addMove
+            validateMove(board, &move);
+            if (move.validation == LEGAL) {
+                addMove
+            }
             target &= target - 1;
         }
         queenBitboard &= queenBitboard - 1;
@@ -541,7 +564,10 @@ int pseudoLegalMoves(Board board, Move moves[]) {
         while (target) {
             int indx = __builtin_ctzll(target);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + KNIGHT_W);
-            addMove
+            validateMove(board, &move);
+            if (move.validation == LEGAL) {
+                addMove
+            }
             target &= target - 1;
         }
         knightBitboard &= knightBitboard - 1;
@@ -553,14 +579,20 @@ int pseudoLegalMoves(Board board, Move moves[]) {
             bool pathClear = (board.occupancy & WHITE_CASTLE_K_PATH) == 0;
             if (pathClear) {
                 Move move = getMove(E1, G1, NO_PROMOTION, K, -1);
-                addMove
+                validateMove(board, &move);
+                if (move.validation == LEGAL) {
+                    addMove
+                }
             }
         }
         if (board.castling & Q) {
             bool pathClear = (board.occupancy & WHITE_CASTLE_Q_PATH) == 0;
             if (pathClear) {
                 Move move = getMove(E1, C1, NO_PROMOTION, Q, -1);
-                addMove
+                validateMove(board, &move);
+                if (move.validation == LEGAL) {
+                    addMove
+                }
             }
         }
     } else {
@@ -568,7 +600,10 @@ int pseudoLegalMoves(Board board, Move moves[]) {
             bool pathClear = (board.occupancy & BLACK_CASTLE_K_PATH) == 0;
             if (pathClear) {
                 Move move = getMove(E8, G8, NO_PROMOTION, k, -1);
-                addMove
+                validateMove(board, &move);
+                if (move.validation == LEGAL) {
+                    addMove
+                }
             }
         }
         if (board.castling & q) {
@@ -576,7 +611,10 @@ int pseudoLegalMoves(Board board, Move moves[]) {
 
             if (pathClear) {
                 Move move = getMove(E8, C8, NO_PROMOTION, q, -1);
-                addMove
+                validateMove(board, &move);
+                if (move.validation == LEGAL) {
+                    addMove
+                }
             }
         }
     }
