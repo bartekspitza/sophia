@@ -439,6 +439,8 @@ int legalMoves(Board board, Move moves[]) {
     Bitboard queenBitboard = board.turn ? board.queen_W : board.queen_B;
     Bitboard knightBitboard = board.turn ? board.knight_W : board.knight_B;
     Bitboard pawnMask = board.turn ? board.pawn_W : board.pawn_B;
+
+    Bitboard attackMask = 0;
  
     // Generate all pieces movement, starting with pawns
     Bitboard singlePush;
@@ -453,20 +455,28 @@ int legalMoves(Board board, Move moves[]) {
 
         Bitboard occ = epSquare | (board.turn ? board.occupancyBlack : board.occupancyWhite);
         if (board.turn) {
-            if (PAWN_W_ATTACKS_EAST[sq] & occ) {
+            Bitboard eastAttacks = PAWN_W_ATTACKS_EAST[sq] & occ;
+            if (eastAttacks) {
+                attackMask |= PAWN_W_ATTACKS_EAST[sq];
                 int toSquare = sq + 7;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
-            if (PAWN_W_ATTACKS_WEST[sq] & occ) {
+            Bitboard westAttacks = PAWN_W_ATTACKS_WEST[sq] & occ;
+            if (westAttacks) {
+                attackMask |= PAWN_W_ATTACKS_WEST[sq];
                 int toSquare = sq + 9;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
         } else {
-            if (PAWN_B_ATTACKS_EAST[sq] & occ) {
+            Bitboard eastAttacks = PAWN_B_ATTACKS_EAST[sq] & occ;
+            if (eastAttacks) {
+                attackMask |= PAWN_B_ATTACKS_EAST[sq];
                 int toSquare = sq - 7;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
-            if (PAWN_B_ATTACKS_WEST[sq] & occ) {
+            Bitboard westAttacks = PAWN_B_ATTACKS_WEST[sq] & occ;
+            if (westAttacks) {
+                attackMask |= PAWN_B_ATTACKS_WEST[sq];
                 int toSquare = sq - 9;
                 addPawnAdvanceWithPossiblePromos(board, isPromoting, board.turn, sq, toSquare, moves, &length);
             }
@@ -475,6 +485,7 @@ int legalMoves(Board board, Move moves[]) {
     }
 
     Bitboard kingMovesMask = getKingMask(board);
+    attackMask |= kingMovesMask;
 
     while (singlePush) {
         int sq = __builtin_ctzll(singlePush);
@@ -507,33 +518,33 @@ int legalMoves(Board board, Move moves[]) {
     }
     while (bishopBitboard) {
         int sq = __builtin_ctzll(bishopBitboard);
-        Bitboard target = getBishopAttacks(sq, board.occupancy);
-        target = target & ~friendlyOccupancy;
+        Bitboard attacks = getBishopAttacks(sq, board.occupancy);
+        attacks = attacks & ~friendlyOccupancy;
 
-        while (target) {
-            int indx = __builtin_ctzll(target);
+        while (attacks) {
+            int indx = __builtin_ctzll(attacks);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + BISHOP_W);
             validateMove(board, &move);
             if (move.validation == LEGAL) {
                 addMove
             }
-            target &= target - 1;
+            attacks &= attacks - 1;
         }
         bishopBitboard &= bishopBitboard - 1;
     }
     while (rookBitboard) {
         int sq = __builtin_ctzll(rookBitboard);
-        Bitboard target = getRookAttacks(sq, board.occupancy);
-        target = target & ~friendlyOccupancy;
+        Bitboard attacks = getRookAttacks(sq, board.occupancy);
+        attacks = attacks & ~friendlyOccupancy;
 
-        while (target) {
-            int indx = __builtin_ctzll(target);
+        while (attacks) {
+            int indx = __builtin_ctzll(attacks);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + ROOK_W);
             validateMove(board, &move);
             if (move.validation == LEGAL) {
                 addMove
             }
-            target &= target - 1;
+            attacks &= attacks - 1;
         }
 
         rookBitboard &= rookBitboard - 1;
@@ -542,17 +553,17 @@ int legalMoves(Board board, Move moves[]) {
         int sq = __builtin_ctzll(queenBitboard);
         Bitboard rookAttacks = getRookAttacks(sq, board.occupancy);
         Bitboard bishopAttacks = getBishopAttacks(sq, board.occupancy);
-        Bitboard target = bishopAttacks | rookAttacks;
-        target = target & ~friendlyOccupancy;
+        Bitboard attacks = bishopAttacks | rookAttacks;
+        attacks = attacks & ~friendlyOccupancy;
 
-        while (target) {
-            int indx = __builtin_ctzll(target);
+        while (attacks) {
+            int indx = __builtin_ctzll(attacks);
             Move move = getMove(sq, indx, NO_PROMOTION, NOT_CASTLE, startPieceType + QUEEN_W);
             validateMove(board, &move);
             if (move.validation == LEGAL) {
                 addMove
             }
-            target &= target - 1;
+            attacks &= attacks - 1;
         }
         queenBitboard &= queenBitboard - 1;
 

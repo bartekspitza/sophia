@@ -32,7 +32,7 @@ int main(void) {
     int bufferSize = 2000;
     char input[bufferSize];
 
-    Board board;
+    Board board = {};
     while(1) {
 
         memset(input, 0, sizeof(input));

@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < cFens;i++) {
         char* fen = FENS[i];
 
-        Board board;
+        Board board = {};
         setFen(&board, fen);
 
         u64 nodes = perft(board, depth, divide);

@@ -32,6 +32,7 @@ typedef struct {
     Bitboard occupancyWhite;
     Bitboard occupancyBlack;
     Bitboard hash;
+    Bitboard opponentAttack;
 } Board;
 
 typedef struct {
