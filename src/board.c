@@ -98,25 +98,10 @@ void makeEnPassantMove(Board* board, Move move) {
 
     board->epSquare = -1;
     board->turn = board->turn ? 0 : 1;
-
-    // Update attack masks 
-    Bitboard prevAttacks;
-    Bitboard newAttacks;
-    if (board->turn) {
-        prevAttacks = PAWN_B_ATTACKS_EAST[move.fromSquare] | PAWN_B_ATTACKS_WEST[move.fromSquare];
-        newAttacks = PAWN_B_ATTACKS_EAST[move.toSquare] | PAWN_B_ATTACKS_WEST[move.toSquare];
-    } else {
-        prevAttacks = PAWN_W_ATTACKS_EAST[move.fromSquare] | PAWN_W_ATTACKS_WEST[move.fromSquare];
-        newAttacks = PAWN_W_ATTACKS_EAST[move.toSquare] | PAWN_W_ATTACKS_WEST[move.toSquare];
-    }
-    board->attacks ^= prevAttacks; // Subtract prevattacks from board->attacks
-    board->attacks |= newAttacks; // Add newattacks to board->attacks
-
     computeOccupancyMasks(board);
 }
 
 void makeCastleMove(Board* board, Move move) {
-    Bitboard attackMaskToRemove;
     if (move.castle == K) {
         board->hash ^= PIECES[KING_W][E1];
         board->hash ^= PIECES[KING_W][G1];
@@ -126,7 +111,6 @@ void makeCastleMove(Board* board, Move move) {
         board->rook_W = toggleBit(board->rook_W, H1);
         board->rook_W = setBit(board->rook_W, F1);
         board->whiteKingSq = G1;
-        attackMaskToRemove = getRookAttacks(H1, board->occupancy);
     } else if (move.castle == Q) {
         board->hash ^= PIECES[KING_W][E1];
         board->hash ^= PIECES[KING_W][C1];
@@ -136,7 +120,6 @@ void makeCastleMove(Board* board, Move move) {
         board->rook_W = toggleBit(board->rook_W, A1);
         board->rook_W = setBit(board->rook_W, D1);
         board->whiteKingSq = C1;
-        attackMaskToRemove = getRookAttacks(A1, board->occupancy);
     } else if (move.castle == k) {
         board->hash ^= PIECES[KING_B][E8];
         board->hash ^= PIECES[KING_B][G8];
@@ -146,7 +129,6 @@ void makeCastleMove(Board* board, Move move) {
         board->rook_B = toggleBit(board->rook_B, H8);
         board->rook_B = setBit(board->rook_B, F8);
         board->blackKingSq = G8;
-        attackMaskToRemove = getRookAttacks(H8, board->occupancy);
     } else if (move.castle == q) {
         board->hash ^= PIECES[KING_B][E8];
         board->hash ^= PIECES[KING_B][C8];
@@ -156,7 +138,6 @@ void makeCastleMove(Board* board, Move move) {
         board->rook_B = toggleBit(board->rook_B, A8);
         board->rook_B = setBit(board->rook_B, D8);
         board->blackKingSq = C8;
-        attackMaskToRemove = getRookAttacks(A8, board->occupancy);
     }
 
     if (board->epSquare != -1) {
@@ -173,26 +154,6 @@ void makeCastleMove(Board* board, Move move) {
     computeOccupancyMasks(board);
     board->epSquare = -1;
     board->turn = board->turn ? 0 : 1;
-
-    // Update attack mask
-    Bitboard attackMaskToAdd;
-    if (move.castle == K) {
-        attackMaskToAdd = KING_MOVEMENT[board->whiteKingSq];
-        attackMaskToAdd |= getRookAttacks(F1, board->occupancy);
-    } else if (move.castle == Q) {
-        attackMaskToAdd = KING_MOVEMENT[board->whiteKingSq];
-        attackMaskToAdd |= getRookAttacks(D1, board->occupancy);
-    } else if (move.castle == k) {
-        attackMaskToAdd = KING_MOVEMENT[board->blackKingSq];
-        attackMaskToAdd |= getRookAttacks(F8, board->occupancy);
-    } else if (move.castle == q) {
-        attackMaskToAdd = KING_MOVEMENT[board->blackKingSq];
-        attackMaskToAdd |= getRookAttacks(D8, board->occupancy);
-    }
-
-    attackMaskToRemove |= KING_MOVEMENT[move.fromSquare];
-    board->attacks ^= attackMaskToRemove;
-    board->attacks |= attackMaskToAdd;
 }
 
 void pushMove(Board* board, Move move) {
@@ -291,42 +252,9 @@ void pushMove(Board* board, Move move) {
     // XOR in new castling rights
     board->hash ^= CASTLING[board->castling];
 
-    // Update attacks mask, for pawn, king and knight moves, we can both remove and add attacks
-    // but for bishops, rooks and queens, we have to update the occupancy mask before we add the new attacks
-    if (move.pieceType == PAWN_W) {
-        board->attacks ^= PAWN_W_ATTACKS_EAST[move.fromSquare] | PAWN_W_ATTACKS_WEST[move.fromSquare];
-        board->attacks |= PAWN_W_ATTACKS_EAST[move.toSquare] | PAWN_W_ATTACKS_WEST[move.toSquare];
-    } else if (move.pieceType == PAWN_B) {
-        board->attacks ^= PAWN_B_ATTACKS_EAST[move.fromSquare] | PAWN_B_ATTACKS_WEST[move.fromSquare];
-        board->attacks |= PAWN_B_ATTACKS_EAST[move.toSquare] | PAWN_B_ATTACKS_WEST[move.toSquare];
-    } else if (move.pieceType == KING_W || move.pieceType == KING_B) {
-        board->attacks ^= KING_MOVEMENT[move.fromSquare];
-        board->attacks |= KING_MOVEMENT[move.toSquare];
-    } else if (move.pieceType == KNIGHT_B || move.pieceType == KNIGHT_W) {
-        board->attacks ^= KNIGHT_MOVEMENT[move.fromSquare];
-        board->attacks |= KNIGHT_MOVEMENT[move.toSquare];
-    } else if (move.pieceType == BISHOP_B || move.pieceType == BISHOP_W) {
-        board->attacks ^= getBishopAttacks(move.fromSquare, board->occupancy);
-    } else if (move.pieceType == ROOK_B || move.pieceType == ROOK_W) {
-        board->attacks ^= getRookAttacks(move.fromSquare, board->occupancy);
-    } else if (move.pieceType == QUEEN_B || move.pieceType == QUEEN_W) {
-        Bitboard queenAttacks = getBishopAttacks(move.fromSquare, board->occupancy) | getRookAttacks(move.fromSquare, board->occupancy);
-        board->attacks ^= queenAttacks;
-    }
-
     // Toggle turn
     board->turn = board->turn ? 0 : 1;
     computeOccupancyMasks(board);
-
-    // Update rest of the attack mask
-    if (move.pieceType == BISHOP_B || move.pieceType == BISHOP_W) {
-        board->attacks |= getBishopAttacks(move.toSquare, board->occupancy);
-    } else if (move.pieceType == ROOK_B || move.pieceType == ROOK_W) {
-        board->attacks |= getRookAttacks(move.toSquare, board->occupancy);
-    } else if (move.pieceType == QUEEN_B || move.pieceType == QUEEN_W) {
-        Bitboard queenAttacks = getBishopAttacks(move.toSquare, board->occupancy) | getRookAttacks(move.toSquare, board->occupancy);
-        board->attacks |= queenAttacks;
-    }
 }
 
 void printBoard(Board board) {
